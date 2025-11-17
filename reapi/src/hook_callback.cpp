@@ -258,6 +258,17 @@ void SV_SendResources(IRehldsHook_SV_SendResources *chain, sizebuf_t *msg)
 	SV_SendResources_AMXX(&data, g_RehldsFuncs->GetHostClient());
 }
 
+// KTP-ReHLDS custom hook: Allow HUD updates during pause
+void SV_UpdatePausedHUD(IRehldsHook_SV_UpdatePausedHUD *chain)
+{
+	auto original = []()
+	{
+		// No parameters, no chain call needed for pre-hooks
+	};
+
+	callVoidForward(RH_SV_UpdatePausedHUD, original);
+}
+
 /*
 * ReGameDLL functions
 */

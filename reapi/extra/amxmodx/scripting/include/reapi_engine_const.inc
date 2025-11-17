@@ -191,6 +191,13 @@ enum EngineFunc
 	*/
 	RH_SV_SendResources,
 
+	/*
+	* Description:  Called during pause to allow HUD updates (KTP-ReHLDS custom hook)
+	* Params:       ()
+	* @note         This is a KTP-ReHLDS specific hook, not available in standard ReHLDS
+	*/
+	RH_SV_UpdatePausedHUD,
+
 };
 
 /**

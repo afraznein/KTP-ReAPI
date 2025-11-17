@@ -118,6 +118,7 @@ enum EngineFunc
 	RH_SV_AllowPhysent,
 	RH_ExecuteServerStringCmd,
 	RH_SV_SendResources,
+	RH_SV_UpdatePausedHUD,  // KTP-ReHLDS custom hook
 
 	// [...]
 };

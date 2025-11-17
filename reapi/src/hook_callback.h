@@ -383,6 +383,9 @@ using SV_SendResources_t = hookdata_t<IRehldsHook_SV_SendResources *, sizebuf_t 
 void SV_SendResources_AMXX(SV_SendResources_t *data, IGameClient *cl);
 void SV_SendResources(IRehldsHook_SV_SendResources *chain, sizebuf_t *msg);
 
+// KTP-ReHLDS custom hook
+void SV_UpdatePausedHUD(IRehldsHook_SV_UpdatePausedHUD *chain);
+
 struct EventPrecache_args_t
 {
 	EventPrecache_args_t(int _type) : type(_type) {}
