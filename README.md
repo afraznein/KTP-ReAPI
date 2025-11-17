@@ -160,8 +160,8 @@ To use KTP-specific hooks, you must be running:
 
 ## 🔗 Related Projects
 
-- **[KTP-ReHLDS](https://github.com/yourusername/KTPReHLDS)** - Custom ReHLDS fork with selective pause
-- **[KTP Match Handler](https://github.com/yourusername/KTPMatchHandler)** - Competitive match management
+- **[KTP-ReHLDS](https://github.com/afraznein/KTP-ReHLDS)** - Custom ReHLDS fork with selective pause
+- **[KTP Match Handler](https://github.com/afraznein/KTPMatchHandler)** - Competitive match management
 - **[Upstream ReAPI](https://github.com/rehlds/ReAPI)** - Original ReAPI project
 - **[ReHLDS](https://github.com/dreamstalker/rehlds)** - Reverse-engineered HLDS
 
