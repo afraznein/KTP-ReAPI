@@ -1,5 +1,10 @@
 #include "precompiled.h"
 
+// KTP: DLL API hooks are only used with Metamod
+// In extension mode, we use ReHLDS hookchains instead (see extension_mode.cpp)
+
+#ifndef REAPI_NO_METAMOD
+
 DLL_FUNCTIONS *g_pFunctionTable;
 DLL_FUNCTIONS gFunctionTable =
 {
@@ -178,3 +183,5 @@ C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *in
 	memcpy(pNewFunctionTable, &g_NewDLLFuncTable, sizeof(NEW_DLL_FUNCTIONS));
 	return TRUE;
 }
+
+#endif // !REAPI_NO_METAMOD

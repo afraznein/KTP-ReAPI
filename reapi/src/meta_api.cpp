@@ -1,27 +1,40 @@
 #include "precompiled.h"
 #include "appversion.h"
 
+#ifdef REAPI_NO_METAMOD
+// KTP: Plugin info is used for logging even in extension mode
+// The struct is defined in extension_mode.h
+plugin_info_stub_t Plugin_info = {
+	"ReAPI",          // name
+	"Asmodai & s1lent",  // author
+	"5.25.0.0-ktp",   // version
+	0,                // reload
+	"ReAPI"           // logtag
+};
+#endif
+
+#ifndef REAPI_NO_METAMOD
+// Metamod-specific globals and exports
+
 meta_globals_t *gpMetaGlobals;
 gamedll_funcs_t *gpGamedllFuncs;
 mutil_funcs_t *gpMetaUtilFuncs;
 enginefuncs_t *g_pengfuncsTable;
 
-plugin_info_t Plugin_info =
-{
-	META_INTERFACE_VERSION,			// ifvers
-	"ReAPI",				// name
-	APP_VERSION,					// version
-	APP_COMMIT_DATE,				// date
-	"Asmodai & s1lent",				// author
-	"https://github.com/s1lentq/reapi/",	// url
-	"ReAPI",				// logtag, all caps please
-	PT_ANYTIME,				// (when) loadable
-	PT_NEVER,				// (when) unloadable
-};
-
 C_DLLEXPORT int Meta_Query(char *interfaceVersion, plugin_info_t **plinfo, mutil_funcs_t *pMetaUtilFuncs)
 {
-	*plinfo = &Plugin_info;
+	static plugin_info_t mm_plugin_info = {
+		META_INTERFACE_VERSION,			// ifvers
+		"ReAPI",				// name
+		APP_VERSION,					// version
+		APP_COMMIT_DATE,				// date
+		"Asmodai & s1lent",				// author
+		"https://github.com/s1lentq/reapi/",	// url
+		"ReAPI",				// logtag, all caps please
+		PT_ANYTIME,				// (when) loadable
+		PT_NEVER,				// (when) unloadable
+	};
+	*plinfo = &mm_plugin_info;
 	gpMetaUtilFuncs = pMetaUtilFuncs;
 	return TRUE;
 }
@@ -59,3 +72,5 @@ C_DLLEXPORT int Meta_Detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
 	OnMetaDetach();
 	return TRUE;
 }
+
+#endif // !REAPI_NO_METAMOD

@@ -14,17 +14,9 @@
 
 #include "precompiled.h"
 
-// Module info
-static amxx_module_info_s g_ModuleInfo =
-{
-	Plugin_info.name,
-	Plugin_info.author,
-	Plugin_info.version,
-	FALSE,
-	Plugin_info.logtag,
-	"reapi",
-	"reapi"
-};
+// Module info - initialized in AMXX_Query to avoid static initialization order issues
+static amxx_module_info_s g_ModuleInfo;
+static bool g_ModuleInfoInitialized = false;
 
 // Storage for the requested functions
 amxxapi_t g_amxxapi;
@@ -117,6 +109,12 @@ static struct funcreq_t
 	//DECLARE_REQ(AmxReregister),
 	//DECLARE_REQ(RegisterFunctionEx),
 	//DECLARE_REQ(MessageBlock),
+
+#ifdef REAPI_NO_METAMOD
+	// KTP: In extension mode, request engine function access from KTPAMXX
+	DECLARE_REQ(GetEngineFuncs),
+	DECLARE_REQ(GetGlobalVars),
+#endif
 };
 
 C_DLLEXPORT int AMXX_Query(int *interfaceVersion, amxx_module_info_s *moduleInfo)
@@ -131,6 +129,20 @@ C_DLLEXPORT int AMXX_Query(int *interfaceVersion, amxx_module_info_s *moduleInfo
 		// Tell amxx core our interface version
 		*interfaceVersion = AMXX_INTERFACE_VERSION;
 		return AMXX_IFVERS;
+	}
+
+	// Initialize module info on first call to avoid static initialization order issues
+	// Plugin_info may be defined in a different translation unit
+	if (!g_ModuleInfoInitialized)
+	{
+		g_ModuleInfo.name = Plugin_info.name;
+		g_ModuleInfo.author = Plugin_info.author;
+		g_ModuleInfo.version = Plugin_info.version;
+		g_ModuleInfo.reload = FALSE;
+		g_ModuleInfo.logtag = Plugin_info.logtag;
+		g_ModuleInfo.library = "reapi";
+		g_ModuleInfo.libclass = "reapi";
+		g_ModuleInfoInitialized = true;
 	}
 
 	// copy module info

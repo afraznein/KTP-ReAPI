@@ -405,6 +405,10 @@ typedef int(*PFN_AMX_REREGISTER)			(AMX *amx, AMX_NATIVE_INFO *list, int list2);
 typedef void *(*PFN_REGISTERFUNCTIONEX)			(void *pfn, const char *desc);
 typedef void(*PFN_MESSAGE_BLOCK)			(int mode, int message, int *opt);
 
+// KTP: Engine function access for extension mode
+typedef enginefuncs_t *(*PFN_GET_ENGINE_FUNCS)		(void);
+typedef globalvars_t *(*PFN_GET_GLOBAL_VARS)		(void);
+
 struct amxxapi_t
 {
 	PFN_ADD_NATIVES			AddNatives;
@@ -487,6 +491,10 @@ struct amxxapi_t
 	PFN_AMX_REREGISTER		AmxReRegister;
 	PFN_REGISTERFUNCTIONEX		RegisterFunctionEx;
 	PFN_MESSAGE_BLOCK		MessageBlock;
+
+	// KTP: Engine function access for extension mode
+	PFN_GET_ENGINE_FUNCS		GetEngineFuncs;
+	PFN_GET_GLOBAL_VARS		GetGlobalVars;
 };
 
 extern amxxapi_t g_amxxapi;

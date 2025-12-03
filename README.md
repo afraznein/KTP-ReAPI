@@ -1,16 +1,22 @@
 # KTP-ReAPI
 
-**Custom AMX Mod X module bridging KTP-ReHLDS engine hooks to plugin developers**
+**ReAPI for KTP Competitive Infrastructure - Extension Mode Fork**
 
-A specialized fork of [ReAPI](https://github.com/rehlds/ReAPI) that exposes custom KTP-ReHLDS engine hooks to AMX ModX plugins, enabling advanced competitive features like real-time pause HUD updates, enhanced match control, and deeper engine integration.
+A specialized fork of [ReAPI](https://github.com/rehlds/ReAPI) modified to run as a **ReHLDS extension module without Metamod**. This enables ReAPI to operate directly through ReHLDS hookchains, providing the same powerful API while eliminating the Metamod dependency.
+
+Also exposes custom KTP-ReHLDS engine hooks to AMX ModX plugins, enabling advanced competitive features like real-time pause HUD updates, enhanced match control, and deeper engine integration.
 
 ---
 
 ## 🎯 Purpose
 
-ReAPI is a bridge between the Half-Life engine (ReHLDS) and AMX ModX plugins. **KTP-ReAPI extends this bridge** to expose custom KTP-ReHLDS hooks that aren't available in standard ReAPI.
+ReAPI is a bridge between the Half-Life engine (ReHLDS) and AMX ModX plugins. **KTP-ReAPI extends this bridge** in two major ways:
+
+1. **Extension Mode** - Runs without Metamod by using ReHLDS hookchains directly
+2. **Custom KTP Hooks** - Exposes KTP-ReHLDS hooks that aren't available in standard ReAPI
 
 **Why this fork exists:**
+- ✅ **No Metamod Required** - Operates as a pure AMXX module via KTPAMXX
 - ✅ Standard ReAPI doesn't know about KTP-ReHLDS custom hooks
 - ✅ KTP-ReHLDS adds engine-level pause features (pause without `pausable 1`)
 - ✅ KTP-ReAPI exposes these features to AMX plugins via new hook constants
@@ -18,9 +24,85 @@ ReAPI is a bridge between the Half-Life engine (ReHLDS) and AMX ModX plugins. **
 
 ---
 
+## 🆕 Extension Mode
+
+Extension Mode allows KTP-ReAPI to run **without Metamod** by interfacing directly with ReHLDS through KTPAMXX.
+
+### Key Differences from Standard ReAPI
+
+| Feature | Standard ReAPI | KTP-ReAPI (Extension Mode) |
+|---------|---------------|---------------------------|
+| Metamod | Required | **Not needed** |
+| Loading | Metamod plugin | AMXX module |
+| Engine access | Via Metamod | Via KTPAMXX/ReHLDS |
+| DLL hooks | Metamod DLL API | ReHLDS hookchains |
+| Dependencies | Metamod + ReHLDS | ReHLDS + KTPAMXX only |
+
+### How Extension Mode Works
+
+Extension mode is enabled by the `REAPI_NO_METAMOD` compile flag in `extension_mode.h`:
+
+```cpp
+// When defined, ReAPI will:
+// - Use ReHLDS hookchains instead of Metamod DLL hooks
+// - Get engine/gamedll interfaces directly from ReHLDS
+// - Not export Meta_Query/Meta_Attach/Meta_Detach
+#define REAPI_NO_METAMOD
+```
+
+**Metamod hooks are replaced with ReHLDS equivalents:**
+- `ServerActivate_Post` → `SV_ActivateServer` hookchain
+- `OnFreeEntPrivateData` → `ED_Free` hookchain
+
+**Engine functions are obtained from KTPAMXX:**
+```cpp
+// KTPAMXX provides GetEngineFuncs() and GetGlobalVars()
+// which ReAPI uses to access engine functions directly
+enginefuncs_t* pEngFuncs = g_amxxapi.GetEngineFuncs();
+globalvars_t* pGlobals = g_amxxapi.GetGlobalVars();
+```
+
+### Extension Mode Requirements
+
+- **KTPAMXX** - Modified AMX Mod X with `GetEngineFuncs()`/`GetGlobalVars()` exports
+- **KTP-ReHLDS** - Modified ReHLDS with hookchain support
+- **NOT compatible** with standard AMX Mod X or Metamod
+
+---
+
 ## 🏗️ Architecture Position
 
-KTP-ReAPI sits between the engine and plugins in the KTP stack:
+### Extension Mode Architecture (No Metamod)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    KTPAMXX (AMX Mod X Fork)                 │
+│  - Loads reapi_amxx module                                  │
+│  - Provides GetEngineFuncs() / GetGlobalVars() to modules   │
+│  - Fires AMXX_Attach / AMXX_Detach lifecycle events         │
+└────────────────────────┬────────────────────────────────────┘
+                         │ AMXX Module Interface
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│                KTP-ReAPI (Extension Mode)                   │
+│  extension_mode.h/cpp:                                      │
+│  - Defines REAPI_NO_METAMOD (compile without Metamod)       │
+│  - Stubs Metamod macros (SET_META_RESULT, RETURN_META, etc) │
+│  - ExtensionMode_Init() / ExtensionMode_Shutdown()          │
+│  - Registers ReHLDS hooks (SV_ActivateServer, ED_Free)      │
+└────────────────────────┬────────────────────────────────────┘
+                         │ ReHLDS API (hookchains)
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    KTP-ReHLDS (Engine Fork)                 │
+│  - Provides rehlds_api.h interface                          │
+│  - Exposes hookchains for server events                     │
+│  - Supplies DLL_FUNCTIONS via GetEntityInterface()          │
+│  - Custom: SV_UpdatePausedHUD() for pause HUD updates       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Plugin Layer Stack
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -209,6 +291,32 @@ This module is the **critical middleware** for:
 
 ### Code Changes
 
+#### Extension Mode Files (New)
+
+| File | Purpose |
+|------|---------|
+| `src/extension_mode.h` | Extension mode defines, Metamod macro stubs |
+| `src/extension_mode.cpp` | Extension mode initialization, ReHLDS hook registration |
+| `build_linux.sh` | Linux build script (native/WSL) |
+| `build_linux_wsl.ps1` | WSL build wrapper for Windows PowerShell |
+| `build_windows.bat` | Windows MSBuild script |
+
+#### Modified Files for Extension Mode
+
+| File | Changes |
+|------|---------|
+| `src/precompiled.h` | Include `extension_mode.h` first, guard `meta_api.h` |
+| `src/main.cpp` | Add extension mode init in `OnAmxxAttach()`, get engine funcs from KTPAMXX |
+| `src/main.h` | Guard Metamod-specific function declarations with `#ifndef REAPI_NO_METAMOD` |
+| `src/meta_api.cpp` | Guard entire file with `#ifndef REAPI_NO_METAMOD` |
+| `src/dllapi.cpp` | Guard entire file with `#ifndef REAPI_NO_METAMOD` |
+| `src/h_export.cpp` | Guard `GiveFnptrsToDll` export |
+| `src/amxxmodule.cpp` | Request `GetEngineFuncs`/`GetGlobalVars` from AMXX API |
+| `src/amxxmodule.h` | Add `PFN_GET_ENGINE_FUNCS`/`PFN_GET_GLOBAL_VARS` types |
+| `CMakeLists.txt` | Add `extension_mode.cpp` to source list |
+
+#### Custom KTP Hook Additions
+
 **New Hook Constant:**
 ```pawn
 // reapi/extra/amxmodx/scripting/include/reapi_engine_const.inc
@@ -234,7 +342,7 @@ hook_t hooklist_engine[] = {
 };
 ```
 
-**Detailed File Changes:**
+**Detailed Hook File Changes:**
 - **reapi_engine_const.inc**: Added `RH_SV_UpdatePausedHUD` enum constant (line ~380)
 - **hook_list.h**: Added `RH_SV_UpdatePausedHUD` to `EngineHook` enum
 - **hook_list.cpp**: Registered hook in `hooklist_engine[]` table with callback
@@ -251,12 +359,16 @@ hook_t hooklist_engine[] = {
   - Located in `reapi/public/rehlds/`
   - Contains KTP-specific hook definitions
   - Forward compatible with future KTP hooks
+- **Added WSL build support** for Linux builds from Windows
+  - `build_linux.sh` - Native Linux/WSL build script
+  - `build_linux_wsl.ps1` - PowerShell wrapper for WSL
 
 ### Version Information
 - **Based on**: ReAPI 5.26+ (upstream)
-- **KTP Fork Version**: 1.0
+- **KTP Fork Version**: 5.25.0.0-ktp
 - **Platform Toolset**: Visual Studio 2022 (v143)
-- **Compatible with**: ReHLDS 3.x, KTP-ReHLDS 3.14+
+- **Compatible with**: KTPAMXX, KTP-ReHLDS 3.14+
+- **NOT compatible with**: Standard AMX Mod X, Metamod (Extension Mode)
 
 ---
 
@@ -514,7 +626,27 @@ KTPMatchHandler.amxx   ; Uses RH_SV_UpdatePausedHUD
 
 ## 📋 Version History
 
-### KTP-ReAPI v1.0 (2025-11-16)
+### KTP-ReAPI v5.25.0.0-ktp (2025-12) - Extension Mode
+
+**Major: Extension Mode Implementation (No Metamod Required)**
+- ✨ Added `REAPI_NO_METAMOD` compile flag for Metamod-free operation
+- ✨ Implemented `extension_mode.h/cpp` with Metamod macro stubs
+- ✨ Added ReHLDS hookchain registration (SV_ActivateServer, ED_Free)
+- ✨ Modified AMXX module to request engine functions from KTPAMXX
+- ✨ Guarded all Metamod-specific code with `#ifndef REAPI_NO_METAMOD`
+
+**Build System:**
+- 🔧 Added `build_linux.sh` for native Linux/WSL builds
+- 🔧 Added `build_linux_wsl.ps1` for WSL builds from Windows PowerShell
+- 🔧 Added `build_windows.bat` for Visual Studio builds
+- 🔧 Updated `CMakeLists.txt` with extension mode source files
+
+**Requirements:**
+- ⚠️ **KTPAMXX required** (not standard AMX Mod X)
+- ⚠️ **KTP-ReHLDS required** for full functionality
+- ⚠️ **Metamod NOT supported** in extension mode
+
+### KTP-ReAPI v1.0 (2025-11-16) - Initial Fork
 - ✨ Initial KTP fork based on ReAPI 5.26+
 - ✨ Added `RH_SV_UpdatePausedHUD` hook support
 - 🔧 Upgraded to Visual Studio 2022 (v143 toolset)

@@ -1,5 +1,8 @@
 #pragma once
 
+// KTP Extension Mode - must be first to define REAPI_NO_METAMOD
+#include "extension_mode.h"
+
 // C
 #include <string.h>			// for strncpy(), etc
 #include <stdarg.h>
@@ -24,8 +27,10 @@
 #include <pm_movevars.h>
 #include <com_progdefs.h>
 
-// metamod SDK
+// metamod SDK - only include if not in extension mode
+#ifndef REAPI_NO_METAMOD
 #include <meta_api.h>
+#endif
 
 // regamedll API
 #include <regamedll_api.h>

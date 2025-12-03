@@ -18,3 +18,6 @@
 publish
 **/appversion.h
 **/reapi_version.inc
+/KTP_ReAPI Files
+*.ps1
+*.sh

@@ -20,6 +20,22 @@ struct
 
 void OnAmxxAttach()
 {
+#ifdef REAPI_NO_METAMOD
+	// KTP: In extension mode, get engine functions from KTPAMXX first
+	// This must be done before any code that uses g_engfuncs or gpGlobals
+	if (g_amxxapi.GetEngineFuncs && g_amxxapi.GetGlobalVars)
+	{
+		enginefuncs_t* pEngFuncs = g_amxxapi.GetEngineFuncs();
+		globalvars_t* pGlobals = g_amxxapi.GetGlobalVars();
+
+		if (pEngFuncs)
+		{
+			memcpy(&g_engfuncs, pEngFuncs, sizeof(enginefuncs_t));
+		}
+		gpGlobals = pGlobals;
+	}
+#endif
+
 	// initialize API
 	api_cfg.Init();
 	g_pEdicts = g_engfuncs.pfnPEntityOfEntIndex(0);
@@ -31,7 +47,18 @@ void OnAmxxAttach()
 		strncpy(g_szMapName, STRING(gpGlobals->mapname), sizeof(g_szMapName) - 1);
 		g_szMapName[sizeof(g_szMapName) - 1] = '\0';
 	}
+
+#ifdef REAPI_NO_METAMOD
+	// KTP: In extension mode, initialize ReHLDS hooks here
+	if (!ExtensionMode_Init())
+	{
+		UTIL_ServerPrint("[ReAPI] ERROR: Extension mode initialization failed!\n");
+	}
+#endif
 }
+
+#ifndef REAPI_NO_METAMOD
+// Metamod-specific callbacks
 
 bool OnMetaAttach()
 {
@@ -95,24 +122,6 @@ void KeyValue(edict_t *pentKeyvalue, KeyValueData *pkvd)
 	SET_META_RESULT(MRES_IGNORED);
 }
 
-CGameRules *InstallGameRules(IReGameHook_InstallGameRules *chain)
-{
-	auto gamerules = chain->callNext();
-
-	// Safe check CGameRules API interface version
-	if (!g_ReGameApi->BGetIGameRules(GAMERULES_API_INTERFACE_VERSION))
-	{
-		api_cfg.FailedReGameDllAPI();
-		UTIL_ServerPrint("[%s]: Interface CGameRules API version '%s' not found.\n", Plugin_info.logtag, GAMERULES_API_INTERFACE_VERSION);
-	}
-	else
-	{
-		g_pGameRules = gamerules;
-	}
-
-	return gamerules;
-}
-
 int DispatchSpawn(edict_t *pEntity)
 {
 	g_pEdicts = g_engfuncs.pfnPEntityOfEntIndex(0);
@@ -144,4 +153,25 @@ void OnFreeEntPrivateData(edict_t *pEdict)
 
 	EntityCallbackDispatcher().DeleteExistingCallbacks(pEntity);
 	SET_META_RESULT(MRES_IGNORED);
+}
+
+#endif // !REAPI_NO_METAMOD
+
+// InstallGameRules is used by both modes (ReGameDLL hookchain)
+CGameRules *InstallGameRules(IReGameHook_InstallGameRules *chain)
+{
+	auto gamerules = chain->callNext();
+
+	// Safe check CGameRules API interface version
+	if (!g_ReGameApi->BGetIGameRules(GAMERULES_API_INTERFACE_VERSION))
+	{
+		api_cfg.FailedReGameDllAPI();
+		UTIL_ServerPrint("[%s]: Interface CGameRules API version '%s' not found.\n", Plugin_info.logtag, GAMERULES_API_INTERFACE_VERSION);
+	}
+	else
+	{
+		g_pGameRules = gamerules;
+	}
+
+	return gamerules;
 }

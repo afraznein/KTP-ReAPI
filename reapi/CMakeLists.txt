@@ -112,6 +112,7 @@ set(REAPI_SRCS
 	"src/h_export.cpp"
 	"src/dllapi.cpp"
 	"src/entity_callback_dispatcher.cpp"
+	"src/extension_mode.cpp"
 	"src/hook_callback.cpp"
 	"src/hook_list.cpp"
 	"src/hook_manager.cpp"
@@ -189,7 +190,7 @@ endif()
 
 set(LINK_FLAGS "${LINK_FLAGS} \
 	-Wl,-rpath,'$ORIGIN/.' \
-	-L${PROJECT_SOURCE_DIR}/lib/linux32")
+	-L\"${PROJECT_SOURCE_DIR}/lib/linux32\"")
 
 set_target_properties(reapi PROPERTIES
 	OUTPUT_NAME reapi_amxx_i386

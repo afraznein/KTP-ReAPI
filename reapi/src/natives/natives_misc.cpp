@@ -3608,7 +3608,9 @@ cell AMX_NATIVE_CALL rh_set_mapname(AMX *amx, cell *params)
 	char mapbuf[256];
 	const char *mapname = getAmxString(amx, params[arg_mapname], mapbuf);
 	g_RehldsData->SetName(mapname);
+#ifndef REAPI_NO_METAMOD
 	g_pFunctionTable->pfnResetGlobalState = ResetGlobalState;
+#endif
 	return TRUE;
 }
 
@@ -3655,7 +3657,9 @@ cell AMX_NATIVE_CALL rh_get_mapname(AMX *amx, cell *params)
 cell AMX_NATIVE_CALL rh_reset_mapname(AMX *amx, cell *params)
 {
 	g_RehldsData->SetName(g_szMapName);
+#ifndef REAPI_NO_METAMOD
 	g_pFunctionTable->pfnResetGlobalState = nullptr;
+#endif
 	return TRUE;
 }
 
