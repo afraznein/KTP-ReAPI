@@ -193,7 +193,7 @@ set(LINK_FLAGS "${LINK_FLAGS} \
 	-L\"${PROJECT_SOURCE_DIR}/lib/linux32\"")
 
 set_target_properties(reapi PROPERTIES
-	OUTPUT_NAME reapi_amxx_i386
+	OUTPUT_NAME reapi_ktp_i386
 	PREFIX ""
 	COMPILE_FLAGS ${COMPILE_FLAGS}
 	LINK_FLAGS ${LINK_FLAGS}
