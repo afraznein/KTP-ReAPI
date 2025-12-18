@@ -1,6 +1,54 @@
-# [ReAPI](https://github.com/rehlds/ReAPI) Changelog
+# KTP-ReAPI Changelog
+
+This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ---
+
+## KTP Fork Releases
+
+### [`5.25.0.0-ktp`] - 2025-12
+
+**Major: Extension Mode Implementation (No Metamod Required)**
+
+#### Added
+- `REAPI_NO_METAMOD` compile flag for Metamod-free operation
+- `extension_mode.h/cpp` with Metamod macro stubs
+- ReHLDS hookchain registration (SV_ActivateServer, ED_Free)
+- AMXX module requests engine functions from KTPAMXX
+- `build_linux.sh` for native Linux/WSL builds
+- `build_linux_wsl.ps1` for WSL builds from Windows PowerShell
+- `build_windows.bat` for Visual Studio builds
+
+#### Changed
+- All Metamod-specific code guarded with `#ifndef REAPI_NO_METAMOD`
+- Updated `CMakeLists.txt` with extension mode source files
+
+#### Requirements
+- **KTPAMXX required** (not standard AMX Mod X)
+- **KTP-ReHLDS required** for full functionality
+- **Metamod NOT supported** in extension mode
+
+---
+
+### [`5.25.0.0-ktp-v1.0`] - 2025-11-16
+
+**Initial KTP Fork**
+
+#### Added
+- `RH_SV_UpdatePausedHUD` hook support for real-time pause HUD updates
+- KTP-ReHLDS 3.14 headers integration
+
+#### Changed
+- Upgraded to Visual Studio 2022 (v143 toolset)
+- Comprehensive documentation for KTP competitive infrastructure
+
+#### Compatibility
+- Full backward compatibility with standard ReAPI plugins
+- Graceful fallback when KTP-ReHLDS not present
+
+---
+
+## Upstream ReAPI Releases
 
 ## [`5.24.0.300`](https://github.com/rehlds/ReAPI/releases/tag/5.24.0.300) - 2023-12-12
 
