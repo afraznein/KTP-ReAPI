@@ -365,7 +365,7 @@ hook_t hooklist_engine[] = {
 
 ### Version Information
 - **Based on**: ReAPI 5.26+ (upstream)
-- **KTP Fork Version**: 5.25.0.0-ktp
+- **KTP Fork Version**: 5.29.0.360-ktp
 - **Platform Toolset**: Visual Studio 2022 (v143)
 - **Compatible with**: KTPAMXX, KTP-ReHLDS 3.14+
 - **NOT compatible with**: Standard AMX Mod X, Metamod (Extension Mode)
@@ -625,6 +625,16 @@ KTPMatchHandler.amxx   ; Uses RH_SV_UpdatePausedHUD
 ---
 
 ## 📋 Version History
+
+### KTP-ReAPI v5.29.0.360-ktp (2025-12) - Extended Hook Headers
+
+**Extension Mode: Additional ReHLDS Hook Headers**
+- ✨ Added 10 new ReHLDS hook typedefs for extension mode:
+  - `PF_changelevel_I`, `PF_setmodel_I`, `SV_ClientUserInfoChanged`
+  - `PF_RegUserMsg_I`, `SV_ClientCommand`, `SV_InactivateClients`
+  - `AlertMessage`, `PF_TraceLine`, `PF_SetClientKeyValue`, `SV_PlayerRunPreThink`
+- ✨ Added hook registry entries to `IRehldsHookchains` interface
+- 🎮 DODX plugin compatibility support
 
 ### KTP-ReAPI v5.25.0.0-ktp (2025-12) - Extension Mode
 

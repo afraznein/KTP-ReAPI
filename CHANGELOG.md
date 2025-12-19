@@ -6,6 +6,29 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
+### [`5.29.0.360-ktp`] - 2025-12
+
+**Extension Mode: Additional ReHLDS Hook Headers**
+
+#### Added
+- 10 new ReHLDS hook typedefs to `rehlds_api.h` for extension mode support:
+  - `PF_changelevel_I` - for server_changelevel forward
+  - `PF_setmodel_I` - for entity model tracking
+  - `SV_ClientUserInfoChanged` - for client_infochanged forward
+  - `PF_RegUserMsg_I` - for capturing message IDs in extension mode
+  - `SV_ClientCommand` - for client_command forward in extension mode
+  - `SV_InactivateClients` - for plugin_end forward before map change
+  - `AlertMessage` - for register_logevent in extension mode
+  - `PF_TraceLine` - for DODX TraceLine_Post
+  - `PF_SetClientKeyValue` - for DODX SetClientKeyValue
+  - `SV_PlayerRunPreThink` - for DODX PlayerPreThink_Post
+- Added hook registry entries to `IRehldsHookchains` interface
+
+#### Purpose
+These hooks enable KTP-ReAPI extension mode to properly intercept engine events that were previously only available through Metamod, supporting both core AMXX functionality and DODX plugin compatibility.
+
+---
+
 ### [`5.25.0.0-ktp`] - 2025-12
 
 **Major: Extension Mode Implementation (No Metamod Required)**
