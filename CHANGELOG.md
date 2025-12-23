@@ -6,7 +6,7 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
-### [`5.29.0.360-ktp`] - 2025-12
+### [`5.29.0.360-ktp`] - 2025-12-19
 
 **Extension Mode: Additional ReHLDS Hook Headers**
 
@@ -29,7 +29,7 @@ These hooks enable KTP-ReAPI extension mode to properly intercept engine events 
 
 ---
 
-### [`5.25.0.0-ktp`] - 2025-12
+### [`5.25.0.0-ktp`] - 2025-12-03
 
 **Major: Extension Mode Implementation (No Metamod Required)**
 

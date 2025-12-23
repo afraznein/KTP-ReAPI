@@ -626,7 +626,7 @@ KTPMatchHandler.amxx   ; Uses RH_SV_UpdatePausedHUD
 
 ## 📋 Version History
 
-### KTP-ReAPI v5.29.0.360-ktp (2025-12) - Extended Hook Headers
+### KTP-ReAPI v5.29.0.360-ktp (2025-12-19) - Extended Hook Headers
 
 **Extension Mode: Additional ReHLDS Hook Headers**
 - ✨ Added 10 new ReHLDS hook typedefs for extension mode:
@@ -636,7 +636,7 @@ KTPMatchHandler.amxx   ; Uses RH_SV_UpdatePausedHUD
 - ✨ Added hook registry entries to `IRehldsHookchains` interface
 - 🎮 DODX plugin compatibility support
 
-### KTP-ReAPI v5.25.0.0-ktp (2025-12) - Extension Mode
+### KTP-ReAPI v5.25.0.0-ktp (2025-12-03) - Extension Mode
 
 **Major: Extension Mode Implementation (No Metamod Required)**
 - ✨ Added `REAPI_NO_METAMOD` compile flag for Metamod-free operation
