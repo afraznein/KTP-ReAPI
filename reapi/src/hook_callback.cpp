@@ -269,6 +269,17 @@ void SV_UpdatePausedHUD(IRehldsHook_SV_UpdatePausedHUD *chain)
 	callVoidForward(RH_SV_UpdatePausedHUD, original);
 }
 
+// KTP-ReHLDS custom hook: RCON audit logging
+void SV_Rcon(IRehldsHook_SV_Rcon *chain, const char *command, const char *from_ip, bool is_valid)
+{
+	auto original = [chain](const char *_command, const char *_from_ip, cell _is_valid)
+	{
+		chain->callNext(_command, _from_ip, _is_valid != 0);
+	};
+
+	callVoidForward(RH_SV_Rcon, original, command, from_ip, is_valid ? TRUE : FALSE);
+}
+
 /*
 * ReGameDLL functions
 */

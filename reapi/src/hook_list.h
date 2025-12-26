@@ -119,6 +119,7 @@ enum EngineFunc
 	RH_ExecuteServerStringCmd,
 	RH_SV_SendResources,
 	RH_SV_UpdatePausedHUD,  // KTP-ReHLDS custom hook
+	RH_SV_Rcon,             // KTP-ReHLDS RCON audit logging hook
 
 	// [...]
 };

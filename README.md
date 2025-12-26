@@ -218,6 +218,56 @@ public OnPausedHUDUpdate() {
 
 ---
 
+### `RH_SV_Rcon`
+
+**RCON command audit logging for security monitoring.**
+
+#### What it does:
+- Called when any RCON command is received by the server
+- Provides command text, source IP, and authentication status
+- Enables comprehensive RCON audit logging
+- Captures both successful and failed authentication attempts
+
+#### Technical Details:
+- **Type**: `IVoidHookChain<const char *, const char *, bool>`
+- **Parameters**: `command`, `from_ip`, `is_valid`
+- **Requirements**: KTP-ReHLDS 3.14+ running on server
+- **Fallback**: Gracefully ignored if KTP-ReHLDS not present
+
+#### Plugin Usage Example:
+
+```pawn
+#include <amxmodx>
+#include <reapi>
+
+public plugin_init() {
+    register_plugin("RCON Auditor", "1.0", "Author");
+
+    #if defined RH_SV_Rcon
+        RegisterHookChain(RH_SV_Rcon, "OnRconCommand", .post = false);
+        server_print("[Audit] RCON audit logging enabled");
+    #endif
+}
+
+#if defined RH_SV_Rcon
+public OnRconCommand(const command[], const from_ip[], bool:is_valid) {
+    if (is_valid) {
+        log_amx("[RCON] Command from %s: %s", from_ip, command);
+    } else {
+        log_amx("[RCON] FAILED AUTH from %s: %s", from_ip, command);
+    }
+    return HC_CONTINUE;
+}
+#endif
+```
+
+#### How KTPAdminAudit Uses It:
+- Logs all RCON commands with timestamps and source IPs
+- Tracks failed authentication attempts for security alerts
+- Integrates with Discord relay for real-time admin notifications
+
+---
+
 ## 🆚 Comparison: Standard ReAPI vs KTP-ReAPI
 
 | Feature | Standard ReAPI | KTP-ReAPI |
@@ -225,6 +275,7 @@ public OnPausedHUDUpdate() {
 | **ReHLDS Hooks** | ✅ All standard hooks | ✅ All standard hooks |
 | **ReGameDLL Hooks** | ✅ Full support | ✅ Full support |
 | **RH_SV_UpdatePausedHUD** | ❌ Not available | ✅ Available |
+| **RH_SV_Rcon** | ❌ Not available | ✅ Available |
 | **Future KTP Hooks** | ❌ Not available | ✅ As added to KTP-ReHLDS |
 | **Backward Compatibility** | ✅ N/A | ✅ Full compatibility |
 | **Requires KTP-ReHLDS** | ❌ No | ⚠️ Only for KTP hooks |
@@ -365,7 +416,7 @@ hook_t hooklist_engine[] = {
 
 ### Version Information
 - **Based on**: ReAPI 5.26+ (upstream)
-- **KTP Fork Version**: 5.29.0.360-ktp
+- **KTP Fork Version**: 5.29.0.361-ktp
 - **Platform Toolset**: Visual Studio 2022 (v143)
 - **Compatible with**: KTPAMXX, KTP-ReHLDS 3.14+
 - **NOT compatible with**: Standard AMX Mod X, Metamod (Extension Mode)
@@ -625,6 +676,14 @@ KTPMatchHandler.amxx   ; Uses RH_SV_UpdatePausedHUD
 ---
 
 ## 📋 Version History
+
+### KTP-ReAPI v5.29.0.361-ktp (2025-12-26) - RCON Audit Hook
+
+**New KTP-ReHLDS Hook: RH_SV_Rcon**
+- ✨ Added `RH_SV_Rcon` hook for RCON command audit logging
+  - Parameters: `command`, `from_ip`, `is_valid`
+  - Enables plugins to monitor all RCON commands with source IP
+  - Used by KTPAdminAudit for security logging
 
 ### KTP-ReAPI v5.29.0.360-ktp (2025-12-19) - Extended Hook Headers
 

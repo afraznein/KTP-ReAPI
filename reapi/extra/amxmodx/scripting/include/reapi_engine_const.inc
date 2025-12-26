@@ -198,6 +198,16 @@ enum EngineFunc
 	*/
 	RH_SV_UpdatePausedHUD,
 
+	/*
+	* Description:  Called when an RCON command is received (KTP-ReHLDS custom hook)
+	* Params:       (const command[], const from_ip[], bool:is_valid)
+	* @param command    The RCON command string (after password parsing)
+	* @param from_ip    The source IP address as a string
+	* @param is_valid   True if RCON password was valid, false otherwise
+	* @note             This is a KTP-ReHLDS specific hook for RCON audit logging
+	*/
+	RH_SV_Rcon,
+
 };
 
 /**

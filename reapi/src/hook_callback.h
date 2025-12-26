@@ -386,6 +386,9 @@ void SV_SendResources(IRehldsHook_SV_SendResources *chain, sizebuf_t *msg);
 // KTP-ReHLDS custom hook
 void SV_UpdatePausedHUD(IRehldsHook_SV_UpdatePausedHUD *chain);
 
+// KTP-ReHLDS RCON audit logging hook
+void SV_Rcon(IRehldsHook_SV_Rcon *chain, const char *command, const char *from_ip, bool is_valid);
+
 struct EventPrecache_args_t
 {
 	EventPrecache_args_t(int _type) : type(_type) {}

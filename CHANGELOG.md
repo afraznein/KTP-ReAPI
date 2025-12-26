@@ -6,6 +6,22 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
+### [`5.29.0.361-ktp`] - 2025-12-26
+
+**New KTP-ReHLDS Hook: RH_SV_Rcon**
+
+#### Added
+- `RH_SV_Rcon` hook for RCON command audit logging
+  - Called when an RCON command is received by the server
+  - Parameters: `command` (string), `from_ip` (string), `is_valid` (bool)
+  - Enables security logging of all RCON attempts with source IP
+  - Used by KTPAdminAudit for comprehensive RCON audit trails
+
+#### Purpose
+This hook allows plugins to monitor and log all RCON commands, including failed authentication attempts, enabling security audit logging and intrusion detection.
+
+---
+
 ### [`5.29.0.360-ktp`] - 2025-12-19
 
 **Extension Mode: Additional ReHLDS Hook Headers**
