@@ -208,6 +208,16 @@ enum EngineFunc
 	*/
 	RH_SV_Rcon,
 
+	/*
+	* Description:  Called when engine is about to change level (KTP-ReHLDS custom hook)
+	* Params:       (const map[], const landmark[])
+	* @param map        The target map name (e.g., "de_dust2")
+	* @param landmark   The landmark for seamless transition (usually empty for normal changelevel)
+	* @note             Return HC_SUPERCEDE to cancel the map change
+	* @note             This is a KTP-ReHLDS specific hook for intercepting map changes
+	*/
+	RH_PF_changelevel_I,
+
 };
 
 /**

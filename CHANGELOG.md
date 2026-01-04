@@ -6,6 +6,24 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
+### [`5.29.0.362-ktp`] - 2026-01
+
+**New KTP-ReHLDS Hooks: Map Change Interception**
+
+#### Added
+- `RH_PF_changelevel_I` hook for intercepting game DLL pfnChangeLevel calls
+  - Parameters: `s1` (map name), `s2` (landmark/startspot)
+  - Enables plugins to intercept map changes triggered by game logic
+- `RH_Host_Changelevel_f` hook for intercepting console changelevel commands
+  - Parameters: `map` (target map), `startspot` (landmark, usually empty)
+  - Enables plugins to intercept `server_cmd("changelevel ...")` calls
+  - Used by KTPMatchHandler for OT continuation and match state persistence
+
+#### Purpose
+These hooks enable KTPMatchHandler to intercept map changes during match flow, allowing proper handling of overtime (staying on same map) and match state persistence across map changes.
+
+---
+
 ### [`5.29.0.361-ktp`] - 2025-12-26
 
 **New KTP-ReHLDS Hook: RH_SV_Rcon**

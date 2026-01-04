@@ -111,6 +111,8 @@ hook_t hooklist_engine[] = {
 	ENG(SV_SendResources, _AMXX),
 	ENG(SV_UpdatePausedHUD),  // KTP-ReHLDS custom hook
 	ENG(SV_Rcon),             // KTP-ReHLDS RCON audit logging hook
+	ENG(PF_changelevel_I),    // KTP-ReHLDS pfnChangeLevel hook (game DLL calls)
+	ENG(Host_Changelevel_f),  // KTP-ReHLDS console changelevel hook (server_cmd changelevel)
 };
 
 #define DLL(h,...) { {}, {}, #h, "ReGameDLL", [](){ return api_cfg.hasReGameDLL(); }, ((!(RG_##h & (MAX_REGION_RANGE - 1)) ? regfunc::current_cell = 1, true : false) || (RG_##h & (MAX_REGION_RANGE - 1)) == regfunc::current_cell++) ? regfunc(h##__VA_ARGS__) : regfunc(#h#__VA_ARGS__), [](){ g_ReGameHookchains->h()->registerHook(&h); }, [](){ g_ReGameHookchains->h()->unregisterHook(&h); }, false}

@@ -416,7 +416,7 @@ hook_t hooklist_engine[] = {
 
 ### Version Information
 - **Based on**: ReAPI 5.26+ (upstream)
-- **KTP Fork Version**: 5.29.0.361-ktp
+- **KTP Fork Version**: 5.29.0.362-ktp
 - **Platform Toolset**: Visual Studio 2022 (v143)
 - **Compatible with**: KTPAMXX, KTP-ReHLDS 3.14+
 - **NOT compatible with**: Standard AMX Mod X, Metamod (Extension Mode)
@@ -676,6 +676,16 @@ KTPMatchHandler.amxx   ; Uses RH_SV_UpdatePausedHUD
 ---
 
 ## 📋 Version History
+
+### KTP-ReAPI v5.29.0.362-ktp (2026-01) - Map Change Interception Hooks
+
+Added two new KTP-ReHLDS hooks for map change interception:
+- `RH_PF_changelevel_I` - Intercepts game DLL pfnChangeLevel calls
+- `RH_Host_Changelevel_f` - Intercepts console changelevel commands
+
+Used by KTPMatchHandler for OT continuation and match state persistence.
+
+---
 
 ### KTP-ReAPI v5.29.0.361-ktp (2025-12-26) - RCON Audit Hook
 

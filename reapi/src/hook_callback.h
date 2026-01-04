@@ -389,6 +389,12 @@ void SV_UpdatePausedHUD(IRehldsHook_SV_UpdatePausedHUD *chain);
 // KTP-ReHLDS RCON audit logging hook
 void SV_Rcon(IRehldsHook_SV_Rcon *chain, const char *command, const char *from_ip, bool is_valid);
 
+// KTP-ReHLDS pfnChangeLevel hook (game DLL calls)
+void PF_changelevel_I(IRehldsHook_PF_changelevel_I *chain, const char *s1, const char *s2);
+
+// KTP-ReHLDS console changelevel hook (server_cmd changelevel)
+void Host_Changelevel_f(IRehldsHook_Host_Changelevel_f *chain, const char *map, const char *startspot);
+
 struct EventPrecache_args_t
 {
 	EventPrecache_args_t(int _type) : type(_type) {}

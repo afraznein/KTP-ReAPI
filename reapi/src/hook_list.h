@@ -120,6 +120,8 @@ enum EngineFunc
 	RH_SV_SendResources,
 	RH_SV_UpdatePausedHUD,  // KTP-ReHLDS custom hook
 	RH_SV_Rcon,             // KTP-ReHLDS RCON audit logging hook
+	RH_PF_changelevel_I,    // KTP-ReHLDS pfnChangeLevel hook (game DLL calls)
+	RH_Host_Changelevel_f,  // KTP-ReHLDS console changelevel hook (server_cmd changelevel)
 
 	// [...]
 };

@@ -280,6 +280,28 @@ void SV_Rcon(IRehldsHook_SV_Rcon *chain, const char *command, const char *from_i
 	callVoidForward(RH_SV_Rcon, original, command, from_ip, is_valid ? TRUE : FALSE);
 }
 
+// KTP-ReHLDS custom hook: Changelevel interception via pfnChangeLevel (game DLL calls)
+void PF_changelevel_I(IRehldsHook_PF_changelevel_I *chain, const char *s1, const char *s2)
+{
+	auto original = [chain](const char *_s1, const char *_s2)
+	{
+		chain->callNext(_s1, _s2);
+	};
+
+	callVoidForward(RH_PF_changelevel_I, original, s1, s2);
+}
+
+// KTP-ReHLDS custom hook: Console changelevel command interception (server_cmd changelevel)
+void Host_Changelevel_f(IRehldsHook_Host_Changelevel_f *chain, const char *map, const char *startspot)
+{
+	auto original = [chain](const char *_map, const char *_startspot)
+	{
+		chain->callNext(_map, _startspot);
+	};
+
+	callVoidForward(RH_Host_Changelevel_f, original, map, startspot);
+}
+
 /*
 * ReGameDLL functions
 */
