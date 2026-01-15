@@ -268,6 +268,99 @@ public OnRconCommand(const command[], const from_ip[], bool:is_valid) {
 
 ---
 
+### `RH_PF_changelevel_I`
+
+**Intercepts map changes triggered by game DLL pfnChangeLevel calls.**
+
+#### What it does:
+- Called when the game DLL triggers a map change (timelimit, round end, etc.)
+- Provides map name and landmark/startspot parameters
+- Enables plugins to intercept, modify, or block map changes
+- Fires BEFORE the map actually changes
+
+#### Technical Details:
+- **Type**: `IVoidHookChain<const char *, const char *>`
+- **Parameters**: `s1` (map name), `s2` (landmark/startspot)
+- **Requirements**: KTP-ReHLDS 3.14+ running on server
+- **Use Case**: Match state persistence, OT continuation on same map
+
+#### Plugin Usage Example:
+
+```pawn
+#include <amxmodx>
+#include <reapi>
+
+public plugin_init() {
+    register_plugin("Map Change Handler", "1.0", "Author");
+
+    #if defined RH_PF_changelevel_I
+        RegisterHookChain(RH_PF_changelevel_I, "OnChangeLevel", .post = false);
+    #endif
+}
+
+#if defined RH_PF_changelevel_I
+public OnChangeLevel(const map[], const startspot[]) {
+    // Save match state before map changes
+    log_amx("[Match] Map changing to %s", map);
+
+    // Return HC_SUPERCEDE to block the map change
+    // Return HC_CONTINUE to allow it
+    return HC_CONTINUE;
+}
+#endif
+```
+
+#### How KTPMatchHandler Uses It:
+- Saves match state (scores, team names, rosters) before map change
+- Enables overtime continuation on the same map
+- Blocks map changes during critical match phases if needed
+
+---
+
+### `RH_Host_Changelevel_f`
+
+**Intercepts map changes triggered by console changelevel command.**
+
+#### What it does:
+- Called when `server_cmd("changelevel ...")` executes
+- Enables plugins to intercept admin-initiated or scripted map changes
+- Fires BEFORE the map actually changes
+
+#### Technical Details:
+- **Type**: `IVoidHookChain<const char *, const char *>`
+- **Parameters**: `map` (target map), `startspot` (landmark, usually empty)
+- **Requirements**: KTP-ReHLDS 3.14+ running on server
+- **Use Case**: Admin map change auditing, match protection
+
+#### Plugin Usage Example:
+
+```pawn
+#include <amxmodx>
+#include <reapi>
+
+public plugin_init() {
+    register_plugin("Changelevel Auditor", "1.0", "Author");
+
+    #if defined RH_Host_Changelevel_f
+        RegisterHookChain(RH_Host_Changelevel_f, "OnHostChangelevel", .post = false);
+    #endif
+}
+
+#if defined RH_Host_Changelevel_f
+public OnHostChangelevel(const map[], const startspot[]) {
+    log_amx("[Admin] Console changelevel to %s", map);
+    return HC_CONTINUE;
+}
+#endif
+```
+
+#### How KTPMatchHandler Uses It:
+- Intercepts map changes during match flow
+- Enables proper match state finalization before map change
+- Works with KTPAdminAudit for changelevel auditing
+
+---
+
 ## 🆚 Comparison: Standard ReAPI vs KTP-ReAPI
 
 | Feature | Standard ReAPI | KTP-ReAPI |
@@ -276,6 +369,8 @@ public OnRconCommand(const command[], const from_ip[], bool:is_valid) {
 | **ReGameDLL Hooks** | ✅ Full support | ✅ Full support |
 | **RH_SV_UpdatePausedHUD** | ❌ Not available | ✅ Available |
 | **RH_SV_Rcon** | ❌ Not available | ✅ Available |
+| **RH_PF_changelevel_I** | ❌ Not available | ✅ Available |
+| **RH_Host_Changelevel_f** | ❌ Not available | ✅ Available |
 | **Future KTP Hooks** | ❌ Not available | ✅ As added to KTP-ReHLDS |
 | **Backward Compatibility** | ✅ N/A | ✅ Full compatibility |
 | **Requires KTP-ReHLDS** | ❌ No | ⚠️ Only for KTP hooks |
