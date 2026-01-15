@@ -1,6 +1,6 @@
 # KTP-ReAPI
 
-**ReAPI for KTP Competitive Infrastructure - Extension Mode Fork**
+**Version 5.29.0.362-ktp** - ReAPI for KTP Competitive Infrastructure - Extension Mode Fork
 
 A specialized fork of [ReAPI](https://github.com/rehlds/ReAPI) modified to run as a **ReHLDS extension module without Metamod**. This enables ReAPI to operate directly through ReHLDS hookchains, providing the same powerful API while eliminating the Metamod dependency.
 
@@ -770,7 +770,7 @@ Used by KTPMatchHandler for OT continuation and match state persistence.
 
 **🌐 Supporting Services:**
 - **[KTP Discord Relay](https://github.com/afraznein/DiscordRelay)** - HTTP relay for Discord
-- **[KTP HLTV Kicker](https://github.com/afraznein/KTPHLTVKicker)** - HLTV spectator management
+- **[KTP HLTV Recorder](https://github.com/afraznein/KTPHLTVRecorder)** - Automatic HLTV demo recording
 
 ### **Upstream Projects:**
 - **[ReAPI (Upstream)](https://github.com/rehlds/ReAPI)** - Original ReAPI project
