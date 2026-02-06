@@ -214,9 +214,21 @@ enum EngineFunc
 	* @param map        The target map name (e.g., "de_dust2")
 	* @param landmark   The landmark for seamless transition (usually empty for normal changelevel)
 	* @note             Return HC_SUPERCEDE to cancel the map change
-	* @note             This is a KTP-ReHLDS specific hook for intercepting map changes
+	* @note             This is only called when game DLL calls g_engfuncs.pfnChangeLevel()
+	* @note             For console changelevel command interception, use RH_Host_Changelevel_f
 	*/
 	RH_PF_changelevel_I,
+
+	/*
+	* Description:  Called when console "changelevel" command is executed (KTP-ReHLDS custom hook)
+	* Params:       (const map[], const startspot[])
+	* @param map        The target map name (e.g., "dod_harrington")
+	* @param startspot  The startspot for map transition (usually empty string, can be null)
+	* @note             Return HC_SUPERCEDE to cancel the map change
+	* @note             This hooks server_cmd("changelevel ...") and console changelevel commands
+	* @note             For game DLL pfnChangeLevel calls, use RH_PF_changelevel_I
+	*/
+	RH_Host_Changelevel_f,
 
 };
 

@@ -71,9 +71,9 @@ const char* ExtensionMode_GetGameInfo(ginfo_t type)
 			if (gameDir[0])
 			{
 #ifdef WIN32
-				snprintf(g_szGameDLLPath, sizeof(g_szGameDLLPath), "%s/dlls/mp.dll", gameDir);
+				snprintf(g_szGameDLLPath, sizeof(g_szGameDLLPath), "%s/dlls/dod.dll", gameDir);
 #else
-				snprintf(g_szGameDLLPath, sizeof(g_szGameDLLPath), "%s/dlls/cs_linux.so", gameDir);
+				snprintf(g_szGameDLLPath, sizeof(g_szGameDLLPath), "%s/dlls/dod_i386.so", gameDir);
 #endif
 			}
 		}
@@ -89,13 +89,13 @@ const char* ExtensionMode_GetGameInfo(ginfo_t type)
 
 	case GINFO_NAME:
 	case GINFO_DESC:
-		return "cstrike";
+		return "dod";
 
 	case GINFO_DLL_FILENAME:
 #ifdef WIN32
-		return "mp.dll";
+		return "dod.dll";
 #else
-		return "cs_linux.so";
+		return "dod_i386.so";
 #endif
 
 	default:
@@ -177,58 +177,13 @@ void ExtensionMode_UnregisterHooks()
 // Reference to user message IDs defined in main.cpp
 extern int gmsgSendAudio, gmsgStatusIcon, gmsgArmorType, gmsgItemStatus, gmsgBarTime, gmsgBarTime2;
 
-// User message lookup table for extension mode
-// This maps message names to their cached IDs
-struct ExtUserMsgEntry
-{
-	const char* pszName;
-	int nId;
-};
-
-// Maximum user messages we track
-#define EXT_MAX_USER_MSGS 64
-static ExtUserMsgEntry g_ExtUserMsgs[EXT_MAX_USER_MSGS];
-static int g_nExtUserMsgCount = 0;
-
-// Add a user message to our cache
-static void ExtCacheUserMsg(const char* pszName, int nId)
-{
-	if (g_nExtUserMsgCount >= EXT_MAX_USER_MSGS)
-		return;
-
-	// Check if already cached
-	for (int i = 0; i < g_nExtUserMsgCount; i++)
-	{
-		if (strcmp(g_ExtUserMsgs[i].pszName, pszName) == 0)
-		{
-			g_ExtUserMsgs[i].nId = nId;
-			return;
-		}
-	}
-
-	g_ExtUserMsgs[g_nExtUserMsgCount].pszName = pszName;
-	g_ExtUserMsgs[g_nExtUserMsgCount].nId = nId;
-	g_nExtUserMsgCount++;
-}
-
 // Lookup user message ID by name
-// In extension mode, we rely on AMXX's API or cached values
+// In extension mode, we return 0 - callers should use AMXX's get_user_msgid native
 int ExtensionMode_GetUserMsgID(void* plid, const char* msgname, int* size)
 {
 	if (size)
 		*size = -1;  // Unknown size
 
-	// Check our cache first
-	for (int i = 0; i < g_nExtUserMsgCount; i++)
-	{
-		if (strcmp(g_ExtUserMsgs[i].pszName, msgname) == 0)
-			return g_ExtUserMsgs[i].nId;
-	}
-
-	// Try to get from AMXX's API if available
-	// g_amxxapi.GetUserMsgID(msgname) would be ideal, but it's not exposed
-	// For now, return 0 to indicate not found
-	// The caller should use AMXX's get_user_msgid native instead
 	return 0;
 }
 
@@ -237,13 +192,6 @@ const char* ExtensionMode_GetUserMsgName(void* plid, int msgid, int* size)
 {
 	if (size)
 		*size = -1;  // Unknown size
-
-	// Check our cache
-	for (int i = 0; i < g_nExtUserMsgCount; i++)
-	{
-		if (g_ExtUserMsgs[i].nId == msgid)
-			return g_ExtUserMsgs[i].pszName;
-	}
 
 	return nullptr;
 }
