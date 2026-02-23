@@ -6,6 +6,22 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
+### [`5.29.0.363-ktp`] - 2026-02
+
+**Extension Mode: Hookchain Cleanup on Map Change**
+
+#### Added
+- `AMXX_PluginsUnloading()` now clears all hookchain plugin callbacks (`g_hookManager.Clear()`, `g_messageHookManager.Clear()`, `g_queryFileManager.Clear()`)
+  - Hookchain pre/post vectors are 100% plugin-owned (registered via `RegisterHookChain` native)
+  - Without cleanup, hooks accumulate on each map change in extension mode, firing N times after N map changes
+  - Plugins re-register during the upcoming `plugin_init`
+  - Engine-level hookchains are unregistered and re-registered on first `RegisterHookChain` call per hook
+
+#### Purpose
+In KTPAMXX extension mode, `plugin_init` fires on every map change without clearing subsystem registrations. ReAPI hookchain vectors grew unbounded, causing hooks to fire multiple times per event. This fix works in conjunction with KTPAMXX 2.6.10's `modules_callPluginsUnloading()` call before `plugin_init`.
+
+---
+
 ### [`5.29.0.362-ktp`] - 2026-01
 
 **New KTP-ReHLDS Hooks: Map Change Interception**

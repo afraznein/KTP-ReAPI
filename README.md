@@ -1,6 +1,6 @@
 # KTP-ReAPI
 
-**Version 5.29.0.362-ktp** | ReAPI fork for KTP competitive Day of Defeat infrastructure
+**Version 5.29.0.363-ktp** | ReAPI fork for KTP competitive Day of Defeat infrastructure
 
 A specialized fork of [ReAPI](https://github.com/rehlds/ReAPI) modified to run as a **ReHLDS extension module without Metamod**. Operates directly through ReHLDS hookchains and exposes custom KTP-ReHLDS engine hooks to AMXX plugins.
 

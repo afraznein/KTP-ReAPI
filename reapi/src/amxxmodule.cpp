@@ -210,6 +210,14 @@ C_DLLEXPORT void AMXX_PluginsUnloaded()
 
 C_DLLEXPORT void AMXX_PluginsUnloading()
 {
+	// KTP: Clear all plugin-owned hook state before plugin re-init on map change.
+	// Hookchain callbacks (pre/post vectors) are 100% plugin-owned (registered via
+	// RegisterHookChain native). Plugins will re-register during the upcoming plugin_init.
+	// This also unregisters the engine-level hookchains; they'll be re-registered
+	// on the first RegisterHookChain call per hook.
+	g_hookManager.Clear();
+	g_messageHookManager.Clear();
+	g_queryFileManager.Clear();
 }
 
 NOINLINE void AMXX_Log(const char *fmt, ...)
