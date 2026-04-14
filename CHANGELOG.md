@@ -6,6 +6,17 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
+### [`5.29.0.364-ktp`] - 2026-04
+
+**Compiler optimizations**
+
+#### Changed
+- `-march=native -mtune=native` replaces `-mtune=generic -msse3` — enables SSE4.2, AVX, BMI instructions on server hardware
+- `-flto` (link-time optimization) — enables cross-translation-unit inlining for hook callback paths
+- `-fno-math-errno` — eliminates redundant errno stores after math calls
+
+---
+
 ### [`5.29.0.363-ktp`] - 2026-02
 
 **Extension Mode: Hookchain Cleanup on Map Change**
