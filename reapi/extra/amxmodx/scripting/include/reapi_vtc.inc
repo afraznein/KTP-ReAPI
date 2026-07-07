@@ -3,6 +3,10 @@
 #endif
 #define _reapi_vtc_included
 
+// WARNING: dead surface on the KTP DoD fleet — requires VoiceTranscoder,
+// which is not present. Every native call here fails by raising a native
+// error that aborts the calling public.
+
 /*
 * Checks whether the player is talking at the moment.
 *

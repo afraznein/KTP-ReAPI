@@ -88,6 +88,9 @@ enum members_tables_e
 #define ReAPIFunc 				{EngineFunc, GamedllFunc, GamedllFunc_CBaseAnimating, GamedllFunc_CBasePlayer, GamedllFunc_CSGameRules, GamedllFunc_CGrenade, GamedllFunc_CWeaponBox, ReCheckerFunc, GamedllFunc_CBasePlayerWeapon, GamedllFunc_CGib, GamedllFunc_CBaseEntity, GamedllFunc_CBotManager}
 
 // Is like FNullEnt
+// WARNING: expands to is_entity(), which makes a CS vtable-indexed virtual
+// call on the entity — on DoD the result is silently wrong or crashes.
+// Do not use on the KTP fleet.
 #define is_nullent(%0)          (%0 == 0 || is_entity(%0) == false)
 
 #define MAX_REGION_RANGE        1024
@@ -157,6 +160,10 @@ enum HookChain
 * @param post       Whether or not to forward this in post
 *
 * @return           Returns a hook handle. Use EnableHookChain/DisableHookChain to toggle the forward on or off
+*
+* @note             A registration FAILURE raises a native error which aborts the calling public —
+*                   the return value is only observable on success, so an `else` branch after a
+*                   failed register never runs.
 */
 native HookChain:RegisterHookChain(ReAPIFunc:function_id, const callback[], post = 0);
 
@@ -239,6 +246,9 @@ native bool:FClassnameIs(const entityIndex, const className[]);
 /*
 * To get WeaponIdType from grenade entity
 *
+* WARNING: casts the entity to CS's CGrenade and reads CS member offsets —
+* on DoD the result is silently wrong or crashes. Do not use on the KTP fleet.
+*
 * @param entity     Grenade entity
 *
 * @return           return enum's of WeaponIdType
@@ -265,6 +275,9 @@ native get_viewent(const index);
 
 /*
 * Check if the entity is valid.
+*
+* WARNING: makes a CS vtable-indexed virtual call on the entity — on DoD the
+* result is silently wrong or crashes. Do not use on the KTP fleet.
 *
 * @return       true/false
 */

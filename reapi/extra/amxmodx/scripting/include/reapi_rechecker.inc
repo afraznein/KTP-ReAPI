@@ -3,6 +3,10 @@
 #endif
 #define _reapi_rechecker_included
 
+// WARNING: dead surface on the KTP DoD fleet — requires Rechecker, which is
+// not present. Every hook register / native call here fails by raising a
+// native error that aborts the calling public.
+
 enum ResourceType
 {
 	RES_TYPE_NONE = 0,

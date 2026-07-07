@@ -3,6 +3,10 @@
 #endif
 #define _reapi_reunion_included
 
+// WARNING: dead surface on the KTP DoD fleet — requires Reunion, which is
+// not present. Every native call here fails by raising a native error that
+// aborts the calling public.
+
 enum client_auth_type
 {
 	CA_TYPE_NONE = 0,

@@ -4,6 +4,10 @@
 
 #define _reapi_gamedll_const_included
 
+// WARNING: dead surface on the KTP DoD fleet — requires ReGameDLL, which is
+// not present. Every hook register / native call using these constants fails
+// by raising a native error that aborts the calling public.
+
 /**
 * Returns true if round has ended by expired time
 *

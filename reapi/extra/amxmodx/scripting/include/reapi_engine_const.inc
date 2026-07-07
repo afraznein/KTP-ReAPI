@@ -127,7 +127,7 @@ enum EngineFunc
 	* Description:   Called when a player's userinfo is being checked.
 	* Params:        (adr, buffer, bool:reconnect, reconnectSlot, name[])
 	*
-	* @note          Param adr is unused, guaranteed to return nothing also, don't send anything through it.
+	* @note          Param adr carries the real client netadr passed to the callback.
 	* @note          In order for param name work, hook needs to be registered as Post.
 	*/
 	RH_SV_CheckUserInfo,
@@ -209,7 +209,7 @@ enum EngineFunc
 	RH_SV_Rcon,
 
 	/*
-	* Description:  Called when engine is about to change level (KTP-ReHLDS custom hook)
+	* Description:  Called when engine is about to change level via pfnChangeLevel (KTP-ReHLDS custom hook)
 	* Params:       (const map[], const landmark[])
 	* @param map        The target map name (e.g., "de_dust2")
 	* @param landmark   The landmark for seamless transition (usually empty for normal changelevel)

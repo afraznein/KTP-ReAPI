@@ -21,12 +21,22 @@ native any:get_entvar(const index, const EntVars:var, any:...);
 /*
 * Sets usercmd data.
 * Use the ucmd_* UCmd enum
+*
+* WARNING: the first argument is a raw memory address the module dereferences
+* for write. On DoD no hook supplies a valid usercmd pointer (all
+* ucmd-supplying hooks are ReGameDLL-side and dead here), so any use is an
+* arbitrary-pointer access.
 */
 native set_ucmd(const ucmd, const UCmd:var, any:...);
 
 /*
 * Returns usercmd data from an entity.
 * Use the ucmd_* UCmd enum
+*
+* WARNING: the first argument is a raw memory address the module dereferences
+* for read. On DoD no hook supplies a valid usercmd pointer (all
+* ucmd-supplying hooks are ReGameDLL-side and dead here), so any use is an
+* arbitrary-pointer access.
 */
 native any:get_ucmd(const ucmd, const UCmd:var, any:...);
 
