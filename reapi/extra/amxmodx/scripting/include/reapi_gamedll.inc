@@ -5,8 +5,9 @@
 #define _reapi_gamedll_included
 
 // WARNING: dead surface on the KTP DoD fleet — requires ReGameDLL, which is
-// not present. Every hook register / native call here fails by raising a
-// native error that aborts the calling public.
+// not present. Hook registers here fail checkably (INVALID_HOOKCHAIN, logged);
+// every native call fails by raising a native error that aborts the calling
+// public.
 
 #include <reapi_gamedll_const>
 

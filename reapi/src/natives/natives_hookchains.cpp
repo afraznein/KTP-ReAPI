@@ -8,7 +8,8 @@
 * @param callback   The forward to call
 * @param post       Whether or not to forward this in post
 *
-* @return           Returns a hook handle. Use EnableHookChain/DisableHookChain to toggle the forward on or off
+* @return           Returns a hook handle on success, INVALID_HOOKCHAIN (0) on failure.
+*                   Use EnableHookChain/DisableHookChain to toggle the forward on or off
 *
 * native HookChain:RegisterHookChain(any:function_id, const callback[], post = 0);
 */
@@ -16,19 +17,26 @@ cell AMX_NATIVE_CALL RegisterHookChain(AMX *amx, cell *params)
 {
 	enum args_e { arg_count, arg_func, arg_handler, arg_post };
 
+	// Failures log and return INVALID_HOOKCHAIN rather than raising a native
+	// error — an abort would skip the rest of the caller's plugin_init, and
+	// consumers guard on the returned handle. Messages carry the plugin name
+	// (LogError used to attribute via the runtime-error path; plain logs must
+	// do it themselves).
+	const char *plugname = g_amxxapi.GetAmxScriptName(g_amxxapi.FindAmxScriptByAmx(amx));
+
 	int func = params[arg_func];
 	int post = params[arg_post];
 	auto hook = g_hookManager.getHook(func);
 
 	if (unlikely(hook == nullptr))
 	{
-		AMXX_LogError(amx, AMX_ERR_NATIVE, "%s: function with id (%d) doesn't exist in current API version.", __FUNCTION__, func);
+		AMXX_Log("%s: [%s] function with id (%d) doesn't exist in current API version.", __FUNCTION__, plugname, func);
 		return INVALID_HOOKCHAIN;
 	}
 
 	if (unlikely(!hook->checkRequirements()))
 	{
-		AMXX_LogError(amx, AMX_ERR_NATIVE, "%s: function (%s) is not available, %s required.", __FUNCTION__, hook->func_name, hook->depend_name);
+		AMXX_Log("%s: [%s] function (%s) is not available, %s required.", __FUNCTION__, plugname, hook->func_name, hook->depend_name);
 		return INVALID_HOOKCHAIN;
 	}
 
@@ -38,14 +46,14 @@ cell AMX_NATIVE_CALL RegisterHookChain(AMX *amx, cell *params)
 	int funcid;
 	if (unlikely(g_amxxapi.amx_FindPublic(amx, funcname, &funcid) != AMX_ERR_NONE))
 	{
-		AMXX_LogError(amx, AMX_ERR_NATIVE, "%s: public function \"%s\" not found.", __FUNCTION__, funcname);
+		AMXX_Log("%s: [%s] public function \"%s\" not found.", __FUNCTION__, plugname, funcname);
 		return INVALID_HOOKCHAIN;
 	}
 
 	int fwid = hook->registerForward(amx, funcname);
 	if (unlikely(fwid == -1))
 	{
-		AMXX_LogError(amx, AMX_ERR_NATIVE, "%s: register forward failed.", __FUNCTION__);
+		AMXX_Log("%s: [%s] register forward failed for \"%s\".", __FUNCTION__, plugname, funcname);
 		return INVALID_HOOKCHAIN;
 	}
 

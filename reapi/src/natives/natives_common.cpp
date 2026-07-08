@@ -809,6 +809,8 @@ AMX_NATIVE_INFO Natives_Checks[] =
 	{ "has_reunion",   has_reunion   },
 	{ "has_vtc",       has_vtc       },
 	{ "has_rechecker", has_rechecker },
+
+	{ nullptr, nullptr }
 };
 
 void RegisterNatives_Common()

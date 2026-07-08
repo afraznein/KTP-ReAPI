@@ -159,11 +159,12 @@ enum HookChain
 * @param callback   The forward to call
 * @param post       Whether or not to forward this in post
 *
-* @return           Returns a hook handle. Use EnableHookChain/DisableHookChain to toggle the forward on or off
+* @return           Returns a hook handle on success, INVALID_HOOKCHAIN (0) on failure.
+*                   Use EnableHookChain/DisableHookChain to toggle the forward on or off
 *
-* @note             A registration FAILURE raises a native error which aborts the calling public —
-*                   the return value is only observable on success, so an `else` branch after a
-*                   failed register never runs.
+* @note             A registration failure logs the reason to the AMXX log and returns
+*                   INVALID_HOOKCHAIN — it does NOT abort the calling public, so check
+*                   the return value.
 */
 native HookChain:RegisterHookChain(ReAPIFunc:function_id, const callback[], post = 0);
 

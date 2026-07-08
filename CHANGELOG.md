@@ -6,6 +6,24 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
+### [`5.29.0.365-ktp`] - 2026-07
+
+> Deploy note: the binary's embedded appversion banner lags (the version-stamping script fails on spaced paths and leaves a stale `appversion.h`) — verify deployments by .so md5, never by banner. Failure logs name the registering plugin.
+
+**Native-table OOB fix + checkable RegisterHookChain failures**
+
+#### Fixed
+- `Natives_Checks[]` was missing its `{ nullptr, nullptr }` terminator — KTPAMXX's native-bind walker iterates until a null sentinel, so every native bind read past the end of the array
+
+#### Changed
+- `RegisterHookChain` failures now log to the AMXX log and return `INVALID_HOOKCHAIN` (0) instead of raising a native error that aborted the calling public — plugin-side guards on the returned handle (e.g. KTPMatchHandler's `HOOK_REGISTER_FAILED` branches) are now reachable
+- `reapi.inc` `RegisterHookChain` doc + gamedll/rechecker dead-surface banners updated to the checkable-failure contract (direct natives on dead surfaces still abort). **Dual-copy rule: mirror into KTPAMXX `plugins/include` when this ships**
+
+#### Documentation
+- `SV_UpdatePausedHUD`'s original-function anchor now carries a comment stating it never calls `callNext` — harmless while reapi is the sole subscriber of the no-op engine anchor, but a second engine-side subscriber registered after reapi would be silently dropped
+
+---
+
 ### [`5.29.0.364-ktp`] - 2026-04
 
 **Compiler optimizations**

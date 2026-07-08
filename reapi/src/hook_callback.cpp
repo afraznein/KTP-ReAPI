@@ -263,7 +263,9 @@ void SV_UpdatePausedHUD(IRehldsHook_SV_UpdatePausedHUD *chain)
 {
 	auto original = []()
 	{
-		// No parameters, no chain call needed for pre-hooks
+		// Never calls chain->callNext. Fine while reapi is the only subscriber
+		// (the engine anchor is a no-op), but a second engine-side subscriber
+		// registered after reapi would be silently dropped.
 	};
 
 	callVoidForward(RH_SV_UpdatePausedHUD, original);
