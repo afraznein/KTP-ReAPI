@@ -83,6 +83,27 @@ exist to lean on. Build locally and smoke-test manually.
 into both, or plugins compiled against one copy silently diverge from the
 runtime behavior described by the other.
 
+## Never run a destructive simulation inside the working tree
+Verifying a fix often means simulating the failure — writing a fake `build.sh`, a
+fake artifact, a fake staging dir. Do it in a **verified** scratch dir, never in
+the repo:
+
+```bash
+T="$(mktemp -d)" || exit 1
+[ -n "$T" ] && [ -d "$T" ] || exit 1   # verify BEFORE you cd — this is the whole rule
+cd "$T" || exit 1
+```
+
+`cd "$T"` with an empty `$T` **silently succeeds and leaves you where you were** —
+in the repo. A simulation that then writes `build.sh` overwrites the real one. On
+2026-07-16 exactly that truncated a tracked 60-line upstream file to 2 lines and
+dropped a junk `.so` into `build/`, where a `find | head -1` could have staged it.
+It was caught only because `git status` showed a modification nobody made.
+
+So: verify the scratch dir before `cd`, and **run `git status` after any test that
+touches the filesystem** — an unexpected change is the tell. Prefer copying inputs
+out to the scratch dir over running tools "in place".
+
 ## Workflow
 1. **Build**: `wsl bash -c "cd '/mnt/n/Nein_/KTP Git Projects/KTPReAPI' && bash build_linux.sh"`
    (CMake → `build/`, auto-stages `reapi_ktp_i386.so` to the KTP DoD Server
