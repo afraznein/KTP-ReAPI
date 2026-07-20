@@ -25,7 +25,7 @@ ReAPI fork modified for extension mode operation. Provides engine hooks and forw
 - Paused HUD updates (`RH_SV_UpdatePausedHUD` hook)
 - RCON command audit (`RH_SV_Rcon` hook)
 - Map change interception (`RH_PF_changelevel_I`, `RH_Host_Changelevel_f` hooks)
-- Engine function access via `MF_GetEngineFuncs()` instead of Metamod
+- Engine function access via `g_amxxapi.GetEngineFuncs()` instead of Metamod
 
 ## KTP-ReHLDS Custom Hooks
 | Hook | Purpose |

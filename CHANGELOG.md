@@ -6,6 +6,50 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
+### [Unreleased]
+
+**Build**
+- `build_linux.sh` no longer reports success on a failed compile. Upstream `build.sh`
+  exits 0 regardless of the compile result, so a broken build previously printed
+  "BUILD COMPLETE!" and staged nothing. Staging now requires a `reapi_ktp_i386.so`
+  newer than the run that produced it, which also catches a stale artifact left in
+  `build/`. Upstream `build.sh` is deliberately not patched (merge-ability).
+
+**Documentation**
+- **Corrected the 5.29.0.364 compiler-flag entry**, which documented
+  `-march=native -mtune=native` — reverted the same day by `43de01b` and never
+  deployed as written. Left the history intact with a correction note, since an
+  operator "restoring" those flags ships an illegal-instruction binary to Denver.
+- **Version Information block was three releases stale** (`5.29.0.362-ktp` in a
+  README whose own header said `.365`). Also restated "Based on ReAPI 5.26+", which
+  nothing in the repo supported.
+- **KTPAMXX floor raised 2.6.9 → 2.6.10** in both places it appears. 2.6.10 is the
+  first version that calls `modules_callPluginsUnloading()`; below it this module's
+  `AMXX_PluginsUnloading()` export is never invoked and hookchains accumulate across
+  map changes — the exact bug 5.29.0.363 shipped to fix.
+- **Documented two plugin-facing contracts the README never stated:** hookchain
+  registrations are cleared on every map change in extension mode (register in
+  `plugin_init`, never cache a handle across maps — a real divergence from
+  Metamod-mode ReAPI), and `RegisterHookChain` returns `INVALID_HOOKCHAIN` on
+  failure rather than aborting the caller (5.29.0.365). The usage example ignored
+  the return value, which is precisely the case that release made detectable.
+- **"Changes from Upstream" file table listed paths that don't exist** — the `src/…`
+  rows are all under `reapi/src/`. The table had been mixing two path conventions.
+- **Extension mode is not a toggle.** The README called `REAPI_NO_METAMOD` a
+  "compile flag"; it is an unconditional `#define`, no CMake option gates it, and
+  every build of this fork is extension mode. Also reworded the comparison table's
+  "Backward compatible: Yes", which read as deployment compatibility and contradicted
+  the README's own (correct) "NOT compatible with Metamod" line.
+- **Include-authority statement flipped** to match the working practice recorded in
+  the 5.29.0.365 entry: includes are mastered here and mirrored into
+  `KTPAMXX/plugins/include/` on release. (No drift today — the two copies are
+  byte-identical.)
+- `modules.ini` snippet now shows the bare `reapi` the deployed config actually uses.
+- `CLAUDE.md`: engine funcs come from `g_amxxapi.GetEngineFuncs()`, not
+  `MF_GetEngineFuncs()`.
+
+---
+
 ### [`5.29.0.365-ktp`] - 2026-07
 
 > Deploy note: the binary's embedded appversion banner lags (the version-stamping script fails on spaced paths and leaves a stale `appversion.h`) — verify deployments by .so md5, never by banner. Failure logs name the registering plugin.
@@ -29,7 +73,12 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 **Compiler optimizations**
 
 #### Changed
-- `-march=native -mtune=native` replaces `-mtune=generic -msse3` — enables SSE4.2, AVX, BMI instructions on server hardware
+- `-march=native -mtune=native` replaces `-mtune=generic -msse3` — enables SSE4.2, AVX, BMI instructions on server hardware.
+  > **Reverted the same day** by `43de01b` and never fleet-deployed as written. The tree
+  > builds `-march=ivybridge -mtune=haswell` (`reapi/CMakeLists.txt:71`). `native` targets
+  > the *build host*, which is Haswell (E3-1271 v3); Denver is Ivy Bridge (E3-1240 v2) and
+  > gets an illegal-instruction binary. **The baseline must be the oldest CPU in the fleet.**
+  > Do not "restore" the flags as first written above.
 - `-flto` (link-time optimization) — enables cross-translation-unit inlining for hook callback paths
 - `-fno-math-errno` — eliminates redundant errno stores after math calls
 

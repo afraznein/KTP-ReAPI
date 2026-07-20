@@ -23,7 +23,7 @@ ReAPI bridges the Half-Life engine (ReHLDS) and AMX Mod X plugins. KTP-ReAPI ext
 
 ## Extension Mode
 
-Extension mode is enabled by the `REAPI_NO_METAMOD` compile flag in `extension_mode.h`.
+Extension mode is always on in this fork — `REAPI_NO_METAMOD` is defined unconditionally in `reapi/src/extension_mode.h`. There is no build option that turns it off, and the shipped `.so` cannot load under Metamod.
 
 | Feature | Standard ReAPI | KTP-ReAPI (Extension Mode) |
 |---------|---------------|---------------------------|
@@ -45,7 +45,7 @@ globalvars_t* pGlobals = g_amxxapi.GetGlobalVars();
 
 ### Requirements
 
-- **KTPAMXX** (v2.6.9+) - Modified AMX Mod X with `GetEngineFuncs()`/`GetGlobalVars()` exports
+- **KTPAMXX** (v2.6.10+) - Modified AMX Mod X with `GetEngineFuncs()`/`GetGlobalVars()` exports. 2.6.10 is the floor because it is the first version that calls `modules_callPluginsUnloading()` before `plugin_init`; on 2.6.9 this module exports `AMXX_PluginsUnloading()` but nothing invokes it, so hookchains accumulate across map changes.
 - **KTP-ReHLDS** (v3.22+) - Modified ReHLDS with hookchain support
 - **NOT compatible** with standard AMX Mod X or Metamod
 
@@ -125,7 +125,10 @@ public plugin_init() {
     register_plugin("Example", "1.0", "Author");
 
     #if defined RH_Host_Changelevel_f
-        RegisterHookChain(RH_Host_Changelevel_f, "OnChangelevel", .post = false);
+        new HookChain:h = RegisterHookChain(RH_Host_Changelevel_f, "OnChangelevel", .post = false);
+        if (h == INVALID_HOOKCHAIN) {
+            log_amx("[Match] changelevel hook did not register");
+        }
     #endif
 }
 
@@ -136,6 +139,17 @@ public OnChangelevel(const map[], const startspot[]) {
 }
 #endif
 ```
+
+**Registration failure is checkable, not fatal (5.29.0.365+).** `RegisterHookChain`
+logs the reason and returns `INVALID_HOOKCHAIN` (0) instead of aborting the calling
+public, so a plugin that ignores the return value now runs on with a hook that was
+never installed. Check it.
+
+**Hookchain registrations are cleared on every map change.** In extension mode
+`AMXX_PluginsUnloading()` and `ExtensionMode_Shutdown()` clear the hook, message,
+and query-file managers, so every registration is dropped per map. Register in
+`plugin_init`; never cache a hook handle across a map change — it is dead on the
+other side. This is a real behavioral difference from Metamod-mode ReAPI.
 
 ---
 
@@ -148,8 +162,8 @@ public OnChangelevel(const map[], const startspot[]) {
 | `RH_SV_Rcon` | No | Yes |
 | `RH_PF_changelevel_I` | No | Yes |
 | `RH_Host_Changelevel_f` | No | Yes |
-| Backward compatible | N/A | Yes |
-| Requires KTP-ReHLDS | No | Only for KTP hooks |
+| Standard ReAPI plugin API | Yes | Yes |
+| Requires KTP-ReHLDS | No | Always — this build has no Metamod path |
 
 ---
 
@@ -196,10 +210,11 @@ dod/addons/ktpamx/modules/reapi_ktp_i386.so
 
 Loaded automatically by KTPAMXX via `modules.ini`:
 ```ini
-reapi_ktp_i386.so
+reapi
 ```
+(The bare name is what the deployed `modules.ini` carries; KTPAMXX appends `_ktp_i386.so`. Either form resolves to the same file.)
 
-Include files for plugin compilation are maintained in `KTPAMXX/plugins/include/` (authoritative source).
+Include files for plugin compilation are maintained here in `reapi/extra/amxmodx/scripting/include/` and mirrored into `KTPAMXX/plugins/include/` on release.
 
 ### Server Configuration
 
@@ -215,22 +230,22 @@ pausable 0
 ### New Files
 | File | Purpose |
 |------|---------|
-| `src/extension_mode.h` | `REAPI_NO_METAMOD` define, Metamod macro stubs |
-| `src/extension_mode.cpp` | Extension mode init, ReHLDS hook registration |
+| `reapi/src/extension_mode.h` | `REAPI_NO_METAMOD` define, Metamod macro stubs |
+| `reapi/src/extension_mode.cpp` | Extension mode init, ReHLDS hook registration |
 | `build_linux.sh` | Linux/WSL build script with auto-staging |
 
 ### Modified Files
 | File | Changes |
 |------|---------|
-| `src/main.cpp` | Extension mode init in `OnAmxxAttach()`, engine funcs from KTPAMXX |
-| `src/main.h` | Guard Metamod functions with `#ifndef REAPI_NO_METAMOD` |
-| `src/meta_api.cpp` | Guard entire file |
-| `src/dllapi.cpp` | Guard entire file |
-| `src/h_export.cpp` | Guard `GiveFnptrsToDll` export |
-| `src/amxxmodule.cpp/h` | Add `PFN_GET_ENGINE_FUNCS`/`PFN_GET_GLOBAL_VARS` |
-| `src/hook_list.h/cpp` | Add 4 KTP hook entries |
-| `src/hook_callback.h/cpp` | Add KTP hook callback handlers |
-| `CMakeLists.txt` | Add `extension_mode.cpp` to sources |
+| `reapi/src/main.cpp` | Extension mode init in `OnAmxxAttach()`, engine funcs from KTPAMXX |
+| `reapi/src/main.h` | Guard Metamod functions with `#ifndef REAPI_NO_METAMOD` |
+| `reapi/src/meta_api.cpp` | Guard entire file |
+| `reapi/src/dllapi.cpp` | Guard entire file |
+| `reapi/src/h_export.cpp` | Guard `GiveFnptrsToDll` export |
+| `reapi/src/amxxmodule.cpp/h` | Add `PFN_GET_ENGINE_FUNCS`/`PFN_GET_GLOBAL_VARS` |
+| `reapi/src/hook_list.h/cpp` | Add 4 KTP hook entries |
+| `reapi/src/hook_callback.h/cpp` | Add KTP hook callback handlers |
+| `reapi/CMakeLists.txt` | Add `extension_mode.cpp` to sources |
 
 ### Build Changes
 - Upgraded to Visual Studio 2022 (v143 toolset) from v140_xp
@@ -241,10 +256,13 @@ pausable 0
 
 ## Version Information
 
-- **Based on**: ReAPI 5.26+ (upstream)
-- **KTP Fork**: 5.29.0.362-ktp
+- **Based on**: upstream ReAPI 5.29.0 (exact merge-base unrecorded)
+- **KTP Fork**: 5.29.0.365-ktp
 - **Platform**: Visual Studio 2022 (v143) / GCC with 32-bit multilib
-- **Compatible with**: KTPAMXX 2.6.9+, KTP-ReHLDS 3.22+
+- **Compatible with**: KTPAMXX 2.6.10+, KTP-ReHLDS 3.22+
+
+The `appversion.h` banner still reads `5.29.0.360-dev+m` and is *not* a deploy
+check — verify by the md5 of `reapi_ktp_i386.so`.
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

@@ -126,3 +126,14 @@ Bump the version (`5.29.0.NNN-ktp`) for every shipped change, write the
 CHANGELOG.md entry with what/why + the `.so` md5 once built, and update the
 version line in README.md. Comments: short, why-not-what, no ticket IDs, never
 delete a tripwire fact while shortening.
+
+If a change is reverted before it ships, say so in the same CHANGELOG entry. The
+2026-07-19 audit found build flags documented here that were reverted the same
+day with no entry for the revert — a changelog that records a change which never
+shipped is worse than one that stays silent.
+
+## Docs check (not just the version line)
+If the change touched a build path, install path, or config location, **verify
+the README still works from a clean clone's perspective — not from this tree**,
+and grep the whole stack for any old path string. Full checklist: root
+`CLAUDE.md` → "Module / Engine Release Checklist".
