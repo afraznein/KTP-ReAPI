@@ -187,6 +187,18 @@ C_DLLEXPORT int AMXX_Attach(PFN_REQ_FNPTR reqFnptrFunc)
 
 C_DLLEXPORT int AMXX_Detach()
 {
+	// RA-03/RA-04: ExtensionMode_Shutdown() and ExtensionMode_UnregisterHooks()
+	// existed but were called from nowhere. Under Metamod, Meta_Detach owns
+	// teardown; in extension mode nothing did, so ReAPI's ReHLDS hooks outlived
+	// the module and only ReHLDS .928's ClearAllHooks backstop kept that from
+	// biting. AMXX_Detach is the extension-mode teardown entry point and has
+	// actually been reached since KTPAMXX 2.7.21 -- before that this would have
+	// been dead code too.
+	if (g_bExtensionMode)
+	{
+		ExtensionMode_Shutdown();
+	}
+
 	return AMXX_OK;
 }
 
