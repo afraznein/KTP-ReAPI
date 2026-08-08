@@ -8,14 +8,18 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ### [Unreleased]
 
+### [5.29.0.366-ktp] - 2026-08-07
+
 **Fixed**
 - **Extension-mode teardown never ran (RA-03/RA-04).** `ExtensionMode_Shutdown()` and
   `ExtensionMode_UnregisterHooks()` existed but were called from nowhere. Under
   Metamod, `Meta_Detach` owns teardown; in extension mode nothing did, so ReAPI's
   `SV_ActivateServer` and `ED_Free` hooks outlived the module and only ReHLDS
   `.928`'s `ClearAllHooks` backstop kept that from biting. `AMXX_Detach` now calls
-  `ExtensionMode_Shutdown()`, gated on `g_bExtensionMode` so the Metamod path is
-  untouched. Note this would have been dead code before KTPAMXX 2.7.21 — extension
+  `ExtensionMode_Shutdown()`, guarded by `g_bExtensionMode`. ⚠️ **That guard is decorative, not a
+  safety property:** the symbol is initialised `true` and assigned nowhere, and `REAPI_NO_METAMOD`
+  is hardcoded — this fork is always extension mode. Kept as documentation of intent; do not read
+  it as protecting a Metamod path that cannot exist here. Note this would have been dead code before KTPAMXX 2.7.21 — extension
   mode only began reaching `AMXX_Detach` then, which is presumably why it was left
   empty. Wired rather than deleted: relying on a backstop in a different repo is
   the arrangement that produced the chi1 shutdown segfault.
