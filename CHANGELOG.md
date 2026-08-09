@@ -8,10 +8,54 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ### [Unreleased]
 
-### [5.29.0.366-ktp] - 2026-08-07
+### [5.29.0.367-ktp] - 2026-08-09
 
 **Fixed**
-- **Extension-mode teardown never ran (RA-03/RA-04).** `ExtensionMode_Shutdown()` and
+- **Entity callbacks survived a map change holding dangling entity pointers.**
+  `AMXX_PluginsUnloading()` cleared the three hook managers but never ran
+  `EntityCallbackDispatcher::DeleteAllCallbacks()`, which the Metamod-only
+  `ServerDeactivate_Post()` does. `EntityCallback::m_pEntity` is a raw `CBaseEntity*`,
+  and map teardown releases entity private data via ReHLDS's `SV_ClearEntities()`, which
+  calls `ReleaseEntityDLLFields()` **directly and never through `ED_Free`** — so
+  `ExtHook_ED_Free()`, the only thing that prunes per-entity callbacks, does not fire
+  during teardown. Every surviving entry then held a dangling pointer, and dispatch
+  matches on raw pointer equality, so a next-map entity recycled onto the same address
+  would run the previous map's callback. Dormant on the fleet today — no shipped `.sma`
+  uses the `SetThink`/`SetTouch` natives — so this is a latent defect, not an observed one.
+  ⚠️ **Three things `ServerDeactivate_Post()` also does are deliberately NOT ported.**
+  `g_pEdicts = nullptr` and `api_cfg.ServerDeactivate()` (which nulls `g_pGameRules`) are
+  both *republish-then-null* hazards here, not omissions: KTPAMXX runs
+  `KTPAMX_ReloadPlugins()` → `modules_callPluginsUnloading()` **after**
+  `SV_ActivateServer`'s `callNext()`, so by the time this function runs the new map's
+  state is already published and nulling it would strand the pointer for the whole map.
+  `api_cfg.ServerDeactivate()` is a no-op on this fleet only because DoD exports no
+  ReGameDLL API — correct by configuration, not by design, which is exactly why it is
+  left out rather than carried. The `g_pFunctionTable->pfnSpawn` restore is excluded
+  because `g_pFunctionTable` is null outside Metamod and the store would segfault.
+  📌 **So RA-04's `ServerDeactivate()` half is declined with cause, not deferred** — porting
+  it as filed would have introduced a bug on any ReGameDLL platform.
+- **`Plugin_info.version` was seven releases stale** — hardcoded `5.25.0.0-ktp`, which is
+  the string AMXX reports for this module, so every `amxx modules` listing on the fleet has
+  named a version last shipped 2025-12-03. It cannot be sourced from `APP_VERSION`:
+  CMake's `appversion` custom target is written `DEPENDS COMMAND …`, which makes the script
+  a dependency rather than a command, so it never runs and `appversion.h` has been frozen at
+  `5.29.0.360-dev+m` / commit `ed8c2d4` since 2025-11-28. Bumped by hand with a comment
+  saying it must be bumped by hand.
+
+**Corrected**
+- **The `5.29.0.366-ktp` entry below overclaimed.** It was filed as fixing both RA-03 and
+  RA-04; the commit is 12 insertions in one file, all inside `AMXX_Detach`, which is the
+  *process*-teardown leg only. RA-04's per-map leg — the `AMXX_PluginsUnloading()` omission —
+  was untouched and stayed open until this release. The `.366` heading is left as shipped
+  and corrected here rather than rewritten, since it is the version the record has to match.
+
+### [5.29.0.366-ktp] - 2026-08-07
+
+⚠️ **This entry overclaimed — see the `5.29.0.367-ktp` correction above.** It closed the
+process-teardown leg (`AMXX_Detach`) only; the per-map leg remained open.
+
+**Fixed**
+- **Extension-mode teardown never ran (RA-03).** `ExtensionMode_Shutdown()` and
   `ExtensionMode_UnregisterHooks()` existed but were called from nowhere. Under
   Metamod, `Meta_Detach` owns teardown; in extension mode nothing did, so ReAPI's
   `SV_ActivateServer` and `ED_Free` hooks outlived the module and only ReHLDS

@@ -4,10 +4,13 @@
 #ifdef REAPI_NO_METAMOD
 // KTP: Plugin info is used for logging even in extension mode
 // The struct is defined in extension_mode.h
+// Bump `version` with every release: it is what AMXX reports for this module.
+// APP_VERSION cannot stand in for it -- CMake's appversion target is written
+// `DEPENDS COMMAND`, so the generator never runs and appversion.h is frozen.
 plugin_info_stub_t Plugin_info = {
 	"ReAPI",          // name
 	"Asmodai & s1lent",  // author
-	"5.25.0.0-ktp",   // version
+	"5.29.0.367-ktp", // version
 	0,                // reload
 	"ReAPI"           // logtag
 };

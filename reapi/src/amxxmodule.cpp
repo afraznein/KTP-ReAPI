@@ -187,13 +187,10 @@ C_DLLEXPORT int AMXX_Attach(PFN_REQ_FNPTR reqFnptrFunc)
 
 C_DLLEXPORT int AMXX_Detach()
 {
-	// RA-03/RA-04: ExtensionMode_Shutdown() and ExtensionMode_UnregisterHooks()
-	// existed but were called from nowhere. Under Metamod, Meta_Detach owns
-	// teardown; in extension mode nothing did, so ReAPI's ReHLDS hooks outlived
-	// the module and only ReHLDS .928's ClearAllHooks backstop kept that from
-	// biting. AMXX_Detach is the extension-mode teardown entry point and has
-	// actually been reached since KTPAMXX 2.7.21 -- before that this would have
-	// been dead code too.
+	// Process teardown only. Meta_Detach owns this under Metamod; in extension
+	// mode nothing called it, so ReAPI's ReHLDS hooks outlived the module and
+	// only ReHLDS .928's ClearAllHooks backstop kept that from biting.
+	// g_bExtensionMode is always true in this fork -- intent, not a gate.
 	if (g_bExtensionMode)
 	{
 		ExtensionMode_Shutdown();
@@ -230,6 +227,12 @@ C_DLLEXPORT void AMXX_PluginsUnloading()
 	g_hookManager.Clear();
 	g_messageHookManager.Clear();
 	g_queryFileManager.Clear();
+
+	// EntityCallback holds a raw CBaseEntity*, and map teardown frees entity
+	// private data through SV_ClearEntities, which bypasses ED_Free -- so the
+	// ED_Free hook that normally prunes these never fires and a next-map entity
+	// recycled onto the same address would dispatch last map's callback.
+	EntityCallbackDispatcher().DeleteAllCallbacks();
 }
 
 NOINLINE void AMXX_Log(const char *fmt, ...)
