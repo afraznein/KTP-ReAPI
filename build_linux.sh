@@ -1,4 +1,6 @@
 #!/bin/bash
+# Set KTP_NO_STAGE=1 to build WITHOUT copying into the local test tree -- staging
+# overwrites an artifact whose md5 may be pinned to a reviewed build.
 # KTPReAPI Linux Build Script
 # Run this on your Ubuntu server or via WSL
 
@@ -101,16 +103,21 @@ find build -name "*.so" 2>/dev/null | head -20
 DEPLOY_DIR="/mnt/n/Nein_/KTP Git Projects/KTP DoD Server/serverfiles"
 if [ -d "$DEPLOY_DIR" ]; then
     echo ""
-    echo "Deploying to staging folder..."
-    mkdir -p "$DEPLOY_DIR/dod/addons/ktpamx/modules"
-    if ! cp "$REAPI_SO" "$DEPLOY_DIR/dod/addons/ktpamx/modules/"; then
-        echo "ERROR: failed to copy $REAPI_SO into the staging tree."
-        exit 1
+    if [ -n "${KTP_NO_STAGE:-}" ]; then
+        echo "Staging SKIPPED (KTP_NO_STAGE set)."
+        echo "  Binary left at: $BINARY_PATH"
+    else
+        echo "Deploying to staging folder..."
+        mkdir -p "$DEPLOY_DIR/dod/addons/ktpamx/modules"
+        if ! cp "$REAPI_SO" "$DEPLOY_DIR/dod/addons/ktpamx/modules/"; then
+            echo "ERROR: failed to copy $REAPI_SO into the staging tree."
+            exit 1
+        fi
+        echo "  -> Copied reapi_ktp_i386.so  (md5 $(md5sum "$REAPI_SO" | cut -d' ' -f1))"
+        echo ""
+        # Printed only when a copy actually happened — it used to print regardless.
+        echo "Files staged at: $DEPLOY_DIR/dod/addons/ktpamx/"
     fi
-    echo "  -> Copied reapi_ktp_i386.so  (md5 $(md5sum "$REAPI_SO" | cut -d' ' -f1))"
-    echo ""
-    # Printed only when a copy actually happened — it used to print regardless.
-    echo "Files staged at: $DEPLOY_DIR/dod/addons/ktpamx/"
 else
     echo ""
     echo "Staging folder not found: $DEPLOY_DIR"
