@@ -1,0 +1,82 @@
+# KTP CI — build gate + dual-copy header drift check for the fleet branch.
+#
+# The upstream workflow (build.yml, "C/C++ CI") triggers on `master` only, which
+# this fork does not have — so it has never run on a KTP push. It also fails on
+# a GPG Import step that wants upstream's release-signing secrets. Left alone
+# rather than patched: it is upstream code, and the fork-delta rule says don't
+# touch it. This file is the KTP gate instead, mirroring KTP-ReHLDS/ktp-ci.yml.
+#
+# Two jobs:
+#  - header-drift: rehlds_api.h is manually duplicated between this repo and
+#    KTP-ReHLDS. Vtable drift produces silent wrong-function calls with NO
+#    compile error. KTP-ReHLDS runs the same check, but only on ITS pushes —
+#    so a change made on this side was ungated until this job existed.
+#  - build-linux: compile gate only. Fleet binaries are built locally and
+#    verified by md5; the CI artifact is never the deploy artifact.
+
+name: KTP CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  header-drift:
+    name: rehlds_api.h drift vs KTP-ReHLDS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout KTP-ReAPI
+        uses: actions/checkout@v6
+
+      - name: Checkout KTP-ReHLDS
+        uses: actions/checkout@v6
+        with:
+          repository: afraznein/KTP-ReHLDS
+          path: ktprehlds
+
+      - name: Diff the dual copies
+        run: |
+          if diff -u reapi/include/cssdk/engine/rehlds_api.h ktprehlds/rehlds/public/rehlds/rehlds_api.h; then
+            echo "rehlds_api.h copies are byte-identical"
+          else
+            echo "::error::rehlds_api.h has DRIFTED between KTP-ReAPI and KTP-ReHLDS. Vtable drift = silent wrong-function calls at runtime. Hook slots are APPEND-ONLY; sync both copies in the same change window."
+            exit 1
+          fi
+
+  build-linux:
+    name: Linux GCC 32-bit build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y cmake gcc-multilib g++-multilib
+
+      - name: Build
+        run: |
+          sed -i 's/\r$//' build.sh
+          chmod +x build.sh
+          bash build.sh -j=$(nproc)
+
+      # build.sh exits 0 even when the compile failed (upstream behaviour, and the
+      # reason RA-02 existed). Its exit code proves nothing — the artifact is the
+      # only gate, so require one that is NEWER than this run.
+      - name: Verify artifacts
+        run: |
+          set -e
+          SO=$(find build -name reapi_ktp_i386.so | head -1)
+          test -n "$SO" || { echo "::error::reapi_ktp_i386.so was not produced — build.sh exits 0 on a failed compile, so check the compiler output above"; exit 1; }
+          file "$SO" | grep -q 'ELF 32-bit' || { echo "::error::$SO is not a 32-bit ELF"; exit 1; }
+          echo "Artifact OK:"
+          ls -la "$SO"
