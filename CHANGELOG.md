@@ -15,11 +15,21 @@ that md5 is a real check rather than a claim.
 
 **Fixed**
 - **The Windows build has been broken since 2025-12-03 and nothing noticed.** The MSVC
-  project never listed `extension_mode.cpp`, so every symbol that file defines —
-  `g_pFunctionTable`, `g_bExtensionMode`, `g_nExtRequestId`, the `ExtensionMode_*` entry
-  points, both `ExtHook_*` callbacks — is an unresolved external on Windows. `CMakeLists.txt`
-  picked the file up when extension mode landed; the `.vcxproj` was never updated. The last
-  successful Windows build predates that commit.
+  project never listed `extension_mode.cpp`. `CMakeLists.txt` picked the file up when
+  extension mode landed; the `.vcxproj` was never updated. The last successful Windows build
+  predates that commit.
+  ⚠️ **The missing-symbol failure is inferred, not observed** — the only Windows build ever
+  run on this fork died at *compile*, on `engine_api.cpp`, and never reached the linker. What
+  would actually go unresolved, checked call site by call site: `g_bExtensionMode`
+  (`amxxmodule.cpp`), `g_pengfuncsTable` (`natives_common.cpp`, `natives_misc.cpp`, and every
+  `EMESSAGE_BEGIN`/`EWRITE_*` inline in `reapi_utils.h`), `g_nExtRequestId` via
+  `MAKE_REQUESTID` (`queryfile_handler.cpp`), `ExtensionMode_Init` (`main.cpp`),
+  `ExtensionMode_Shutdown` (`amxxmodule.cpp`), `ExtensionMode_GetGameInfo`
+  (`mod_regamedll_api.cpp`), `ExtensionMode_GetUserMsgID` (`main.cpp`) and
+  `ExtensionMode_MDLL_Spawn`/`_Touch` (`reapi_utils.cpp`). **Not** `g_pFunctionTable` — every
+  use of it is Metamod-guarded and `reapi_utils.h` only declares it `extern`, so its
+  definition here is belt-and-braces. **Not** the two `ExtHook_*` callbacks either: nothing
+  outside `extension_mode.cpp` names them.
   Two more Windows-only breakages sat behind it, invisible until the project compiles the
   right set of files: `engine_api.cpp` is in the `.vcxproj` but not in `CMakeLists.txt`, and
   it needs `ENGINE_INTERFACE_VERSION`, which only reaches a TU through `meta_api.h` — a
@@ -31,12 +41,16 @@ that md5 is a real check rather than a claim.
   ⚠️ **Unverified on Windows.** There is no Visual Studio on the machine this was written
   on. The fix is derived from the CI compiler output and the symbol sets, not observed. The
   new CI job is what will prove it.
-- **Upstream's `build.yml` went red on every pull request.** Its `pull_request` trigger had
-  no branch filter, so a workflow that exists to sign and publish upstream's releases — and
-  therefore needs GPG and PFX secrets and a `master` branch the fork does not have — ran
-  here and failed, reliably enough that nobody read it. Scoped to `master`. Its Linux job
-  also still moved and glibc-tested `reapi_amxx_i386.so`, a name the KTP CMake rename
-  retired; corrected in place so the file does not carry a path that cannot exist.
+- **Upstream's `build.yml` could still be reached on this fork, and failed when it was.** It
+  exists to sign and publish upstream's releases, so it needs GPG and PFX secrets and a
+  `master` branch the fork does not have. `push` was already scoped to `master`;
+  `pull_request` was not, so the first PR opened here would have gone red on both jobs, and
+  `release`/`workflow_dispatch` reach it regardless of branch — a manual dispatch is exactly
+  how the one red run on this fork happened. Filtered `pull_request` to `master` and gated
+  all three jobs on `github.repository != 'afraznein/KTP-ReAPI'`, which is what actually
+  makes it inert whatever the trigger. Its Linux job also still moved and glibc-tested
+  `reapi_amxx_i386.so`, a name the KTP CMake rename retired; corrected in place rather than
+  left as a path that cannot exist.
 
 **Added**
 - **A Windows compile gate**, `build-windows` in `ktp-ci.yml`. The MSVC project and
@@ -47,10 +61,15 @@ that md5 is a real check rather than a claim.
 **Corrected**
 - **`.gitignore`'s `*.sh`, `*.bat` and `*.ps1` matched the build tooling itself** —
   `build.sh`, `build_linux.sh`, `appversion.sh`, `glibc_test.sh`, `appversion.bat`,
-  `PostBuild.bat`. All six are in the repo, but only because they were force-added; nothing
+  `PostBuild.bat`. All are in the repo, but only because they were force-added; nothing
   structural held them there and the next one added would have disappeared from `git add -A`
-  without a word. Replaced with the four personal wrappers by name. The ignored set is
-  unchanged — only how it is expressed.
+  without a word. Replaced with the personal wrappers named by path. Nothing in the tree
+  today changes state — the new patterns are a strict subset, so nothing is newly hidden and
+  nothing currently present is newly exposed — but the point of the change is that it
+  narrows what gets caught *in future*. ⚠️ **That cuts both ways in a public repo:** an
+  ad-hoc `deploy.sh` carrying fleet credentials used to be swallowed by `*.sh` and is now one
+  `git add -A` from being committed. Nothing here needs such a script; if one ever does, give
+  it its own ignore line before writing it.
 - **"CMake's `appversion` target never runs" is wrong**, and it had been repeated into a
   code comment in `meta_api.cpp`. `add_custom_target(appversion DEPENDS COMMAND …)` does run
   the script: CI regenerates `appversion.h` on every clean build. What actually freezes the

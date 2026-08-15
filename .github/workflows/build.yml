@@ -2,11 +2,18 @@
 #
 # It builds, signs and publishes a GitHub release, and every one of those halves
 # needs something the fork does not have: upstream's GPG and PFX secrets, a
-# `master` branch, and upstream's artifact names. The pull_request trigger had no
-# branch filter, so it fired on every PR here and both jobs went red -- reliably
-# enough that nobody read them, which is how the Windows link failure survived.
-# Scoped to `master` so it no longer runs; left otherwise untouched because it is
-# upstream code and patching it costs merge-ability.
+# `master` branch, and upstream's artifact names.
+#
+# `push` was already scoped to `master`. `pull_request` was not, so the first PR
+# opened here would have gone red on both jobs; `release` and `workflow_dispatch`
+# reach it too, and a manual dispatch is how the one red run on this fork happened.
+# The per-job `if` is what actually keeps it inert, regardless of trigger. Written
+# as "not this fork" rather than "is upstream" on purpose -- it stays a no-op
+# whatever upstream's repository is named.
+#
+# Otherwise left alone: it is upstream code and patching it costs merge-ability.
+# The one exception is the CMake output rename below, which upstream's Linux job
+# still refers to by its old name.
 #
 # The fork's actual build gate is ktp-ci.yml.
 
@@ -30,6 +37,7 @@ jobs:
   windows:
     name: 'Windows'
     runs-on: windows-2022
+    if: github.repository != 'afraznein/KTP-ReAPI'
 
     env:
       solution: 'msvc/reapi.sln'
@@ -154,6 +162,7 @@ jobs:
   linux:
     name: 'Linux'
     runs-on: ubuntu-24.04
+    if: github.repository != 'afraznein/KTP-ReAPI'
     container: debian:11-slim
     outputs:
       app-version: ${{ steps.app-version.outputs.version }}
@@ -274,6 +283,7 @@ jobs:
   publish:
     name: 'Publish'
     runs-on: ubuntu-latest
+    if: github.repository != 'afraznein/KTP-ReAPI'
     needs: [windows, linux]
 
     steps:

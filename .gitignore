@@ -26,6 +26,8 @@ publish
 # the MSVC project needs. Those are in the repo only because someone force-added
 # them; the next build script added would have been dropped by `git add -A` with
 # no warning.
+# The trade: this repo is PUBLIC, and a script carrying fleet credentials is no
+# longer caught by accident. Add its ignore line before you write it.
 /build_linux_wsl.ps1
 /build_windows.bat
 /build_wsl.bat

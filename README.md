@@ -197,10 +197,12 @@ The build script auto-stages to `KTP DoD Server/serverfiles/dod/addons/ktpamx/mo
 Output: `msvc/Release/reapi_amxx.dll`
 
 The MSVC project and `reapi/CMakeLists.txt` keep **separate source lists**. A file
-added to one and not the other builds on Linux and fails to link on Windows —
-`extension_mode.cpp` did exactly that from 2025-12-03 until 2026-08-15. The
-`build-windows` job in `.github/workflows/ktp-ci.yml` is what catches it now; add
-new sources to both lists.
+added to one and not the other builds on Linux and fails on Windows —
+`extension_mode.cpp` was missing from the MSVC list from 2025-12-03 until
+2026-08-15. Add new sources to both. The `build-windows` job in
+`.github/workflows/ktp-ci.yml` is what catches it now, and no Windows build has run
+since the fix, so treat the Windows build as repaired-but-unproven until that job
+has gone green once.
 
 ---
 

@@ -106,9 +106,9 @@ jobs:
       - name: Build
         run: msbuild msvc\reapi.sln -p:Configuration=Release -p:Platform=Win32 -t:Rebuild -v:minimal
 
-      # msbuild does return nonzero on failure, unlike build.sh. This checks the
-      # artifact anyway, so a future PostBuild step that eats the exit code can't
-      # turn a failed link into a green run.
+      # msbuild does return nonzero on failure, unlike build.sh, so this is not the
+      # gate the Linux job's artifact check is. It is here to catch an OutDir or
+      # TargetName change silently moving the .dll somewhere nothing collects it.
       - name: Verify artifact
         shell: pwsh
         run: |
