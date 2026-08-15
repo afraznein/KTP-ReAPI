@@ -1,5 +1,4 @@
 **/build
-*.bat
 **/msvc/Debug*
 **/msvc/Release*
 **/msvc/*.sdf
@@ -19,5 +18,15 @@ publish
 **/appversion.h
 **/reapi_version.inc
 /KTP_ReAPI Files
-*.ps1
-*.sh
+
+# Personal build wrappers -- they hardcode one machine's N:\ paths.
+# Named one by one deliberately. The blanket *.sh / *.bat / *.ps1 patterns that
+# used to sit here also matched build.sh, build_linux.sh, appversion.sh,
+# glibc_test.sh, appversion.bat and PostBuild.bat, every one of which CI, CMake or
+# the MSVC project needs. Those are in the repo only because someone force-added
+# them; the next build script added would have been dropped by `git add -A` with
+# no warning.
+/build_linux_wsl.ps1
+/build_windows.bat
+/build_wsl.bat
+/collect_builds.bat
