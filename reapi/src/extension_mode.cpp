@@ -174,11 +174,8 @@ void ExtensionMode_UnregisterHooks()
 	}
 }
 
-// Reference to user message IDs defined in main.cpp
-extern int gmsgSendAudio, gmsgStatusIcon, gmsgArmorType, gmsgItemStatus, gmsgBarTime, gmsgBarTime2;
-
-// Lookup user message ID by name
-// In extension mode, we return 0 - callers should use AMXX's get_user_msgid native
+// Unreachable in extension mode: the only GET_USER_MSG_ID call site is Metamod-guarded.
+// Kept so the macro in extension_mode.h still resolves if that guard ever changes.
 int ExtensionMode_GetUserMsgID(void* plid, const char* msgname, int* size)
 {
 	if (size)
@@ -187,7 +184,7 @@ int ExtensionMode_GetUserMsgID(void* plid, const char* msgname, int* size)
 	return 0;
 }
 
-// Lookup user message name by ID
+// Unreachable in extension mode, same as GetUserMsgID above.
 const char* ExtensionMode_GetUserMsgName(void* plid, int msgid, int* size)
 {
 	if (size)
@@ -222,9 +219,9 @@ void ExtHook_SV_ActivateServer(IRehldsHook_SV_ActivateServer* chain, int runPhys
 		g_pMove = g_ReGameApi->GetPlayerMove();
 	}
 
-	// Note: User message IDs (gmsgSendAudio, etc.) are set by the game DLL
-	// In extension mode, we rely on AMXX's get_user_msgid() native for lookups
-	// The ReAPI natives that use these will get them on-demand if needed
+	// gmsg* stay 0 here: their only setter is the Metamod-guarded ServerActivate_Post and
+	// there is no on-demand lookup anywhere. Inert on DoD, where the rg_* consumers are
+	// stubbed out without ReGameDLL; on CS a message id of 0 is a Sys_Error, which is fatal.
 }
 
 // Hook callback: Called when entity is freed (replaces OnFreeEntPrivateData)

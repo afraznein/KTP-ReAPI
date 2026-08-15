@@ -25,11 +25,15 @@ that md5 is a real check rather than a claim.
   `EMESSAGE_BEGIN`/`EWRITE_*` inline in `reapi_utils.h`), `g_nExtRequestId` via
   `MAKE_REQUESTID` (`queryfile_handler.cpp`), `ExtensionMode_Init` (`main.cpp`),
   `ExtensionMode_Shutdown` (`amxxmodule.cpp`), `ExtensionMode_GetGameInfo`
-  (`mod_regamedll_api.cpp`), `ExtensionMode_GetUserMsgID` (`main.cpp`) and
-  `ExtensionMode_MDLL_Spawn`/`_Touch` (`reapi_utils.cpp`). **Not** `g_pFunctionTable` — every
-  use of it is Metamod-guarded and `reapi_utils.h` only declares it `extern`, so its
-  definition here is belt-and-braces. **Not** the two `ExtHook_*` callbacks either: nothing
-  outside `extension_mode.cpp` names them.
+  (`mod_regamedll_api.cpp`) and `ExtensionMode_MDLL_Spawn`/`_Touch` (`reapi_utils.cpp`).
+  **Not** `g_pFunctionTable` — every use of it is Metamod-guarded and `reapi_utils.h` only
+  declares it `extern`, so its definition here is belt-and-braces. **Not** the two
+  `ExtHook_*` callbacks either: nothing outside `extension_mode.cpp` names them. **And not
+  `ExtensionMode_GetUserMsgID`**, which this list carried until the comment sweep below went
+  looking for its call site: the only one is `main.cpp:88`, inside `#ifndef
+  REAPI_NO_METAMOD`, and the `.vcxproj` neither defines nor `/U`-undefines that macro — so
+  the block is preprocessed out on MSVC exactly as it is on Linux, and the symbol is never
+  referenced anywhere.
   Two more Windows-only breakages sat behind it, invisible until the project compiles the
   right set of files: `engine_api.cpp` is in the `.vcxproj` but not in `CMakeLists.txt`, and
   it needs `ENGINE_INTERFACE_VERSION`, which only reaches a TU through `meta_api.h` — a
@@ -59,6 +63,20 @@ that md5 is a real check rather than a claim.
   gate only; nothing here ships a `.dll`.
 
 **Corrected**
+- **The extension-mode user-message comments described a path that does not exist.**
+  `ExtHook_SV_ActivateServer` claimed the `rg_*` natives "will get them on-demand if
+  needed"; there is no on-demand lookup anywhere. `gmsg*` stay 0 in extension mode because
+  their only setter is the Metamod-guarded `ServerActivate_Post`, and
+  `ExtensionMode_GetUserMsgID`/`GetUserMsgName` return failure sentinels and have no live
+  call site — the only `GET_USER_MSG_ID` use is itself inside `#ifndef REAPI_NO_METAMOD`.
+  Inert on DoD, where every consumer sits in `Misc_Natives_RG` and is stubbed out without
+  ReGameDLL; on a CS extension-mode deployment `rg_send_audio` would `EMESSAGE_BEGIN` with
+  message id 0, which `PF_MessageBegin_I` answers with a fatal `Sys_Error` — process down,
+  not a console error. The comments now say that, and point at capturing `PF_RegUserMsg_I` as
+  the fix if it is ever wanted. The dead `extern int
+  gmsgSendAudio, …` in `extension_mode.cpp` — unused in that translation unit — went with
+  them. **Comments and one unused declaration only; codegen is untouched, so
+  `ea5f1801a98650f1c7e20a4636b39685` still stands.**
 - **`.gitignore`'s `*.sh`, `*.bat` and `*.ps1` matched the build tooling itself** —
   `build.sh`, `build_linux.sh`, `appversion.sh`, `glibc_test.sh`, `appversion.bat`,
   `PostBuild.bat`. All are in the repo, but only because they were force-added; nothing
