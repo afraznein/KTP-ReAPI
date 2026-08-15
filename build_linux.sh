@@ -99,13 +99,14 @@ echo ""
 echo "Built files:"
 find build -name "*.so" 2>/dev/null | head -20
 
-# Deploy to staging folder
-DEPLOY_DIR="/mnt/n/Nein_/KTP Git Projects/KTP DoD Server/serverfiles"
+# Deploy to staging folder. Overridable so a test run can stage somewhere
+# harmless instead of over an artifact whose md5 is pinned to a shipped build.
+DEPLOY_DIR="${KTP_STAGING_DIR:-/mnt/n/Nein_/KTP Git Projects/KTP DoD Server/serverfiles}"
 if [ -d "$DEPLOY_DIR" ]; then
     echo ""
     if [ -n "${KTP_NO_STAGE:-}" ]; then
         echo "Staging SKIPPED (KTP_NO_STAGE set)."
-        echo "  Binary left at: $BINARY_PATH"
+        echo "  Binary left at: $REAPI_SO"
     else
         echo "Deploying to staging folder..."
         mkdir -p "$DEPLOY_DIR/dod/addons/ktpamx/modules"
