@@ -1,3 +1,15 @@
+# Upstream ReAPI's release pipeline. DORMANT in this fork, deliberately.
+#
+# It builds, signs and publishes a GitHub release, and every one of those halves
+# needs something the fork does not have: upstream's GPG and PFX secrets, a
+# `master` branch, and upstream's artifact names. The pull_request trigger had no
+# branch filter, so it fired on every PR here and both jobs went red -- reliably
+# enough that nobody read them, which is how the Windows link failure survived.
+# Scoped to `master` so it no longer runs; left otherwise untouched because it is
+# upstream code and patching it costs merge-ability.
+#
+# The fork's actual build gate is ktp-ci.yml.
+
 name: C/C++ CI
 
 on:
@@ -8,6 +20,7 @@ on:
       - '.github/**'
 
   pull_request:
+    branches: [master]
     types: [opened, reopened, synchronize]
   release:
     types: [published]
@@ -234,14 +247,16 @@ jobs:
           rsync -a reapi/extra/amxmodx/ publish/addons/amxmodx/
           rsync -a reapi/version/reapi_version.inc publish/addons/amxmodx/scripting/include/
 
+      # KTP renamed the CMake output; upstream's reapi_amxx_i386.so has not existed
+      # since extension mode landed.
       - name: Move files
         run: |
-          mv build/reapi/reapi_amxx_i386.so publish/addons/amxmodx/modules/reapi_amxx_i386.so
+          mv build/reapi/reapi_ktp_i386.so publish/addons/amxmodx/modules/reapi_ktp_i386.so
 
       - name: Run GLIBC/ABI version compat test
         run: |
           binaries=(
-            "publish/addons/amxmodx/modules/reapi_amxx_i386.so"
+            "publish/addons/amxmodx/modules/reapi_ktp_i386.so"
           )
           bash ./reapi/version/glibc_test.sh ${binaries[@]}
           if [[ $? -ne 0 ]]; then
