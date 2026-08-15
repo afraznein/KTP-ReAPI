@@ -56,26 +56,45 @@ reapi itself never wires into a hook list — those exist purely to keep vtable
 *order* matching what KTPAMXX/DODX also consume; don't delete an
 unused-looking entry without checking all three repos first.
 
-## The build wrapper lies about success
-`build_linux.sh` prints "BUILD COMPLETE!" by checking that `build/` exists,
-not that the `.so` was produced — a failed compile still leaves the **stale
-previous** `reapi_ktp_i386.so` sitting in the staging folder, and the banner
-says success. **After every build, confirm the staged `.so`'s mtime/md5
-actually changed** before trusting the banner or shipping it.
+## The build wrapper used to lie about success — fixed, keep the habit
+`build_linux.sh` judged success on `build/` existing rather than on the `.so`
+being produced. Since `build.sh` does `rm -rf build; mkdir build` up front and
+then `exit 0` unconditionally, a failed compile printed "BUILD COMPLETE!" while
+the **stale previous** `reapi_ktp_i386.so` stayed in the staging folder, ready to
+ship as `.new`. Fleet md5 verification could not catch it: the md5 came from that
+same stale file.
+
+Fixed — the wrapper now requires a `reapi_ktp_i386.so` newer than the run and
+prints "Files staged at:" only when a copy actually happened. `build.sh`'s
+`exit 0` is upstream and deliberately left alone, so **the exit code still proves
+nothing**; the artifact is the gate. Keep confirming the staged `.so`'s md5
+moved, and never re-simplify the wrapper back to a directory check.
 
 Relatedly: the extension-mode `Plugin_info.version` string is a hardcoded
-literal, independent of the (separately known-stale) appversion banner. There
-are now three places the version can lie — the hardcode, the banner, the
-CHANGELOG — so **only the `.so` md5 is trustworthy** for verifying what's
-actually deployed.
+literal, independent of the appversion banner. There are now three places the
+version can lie — the hardcode, the banner, the CHANGELOG — so **only the `.so`
+md5 is trustworthy** for verifying what's actually deployed. The banner is stale
+on this box for its own reason: `appversion.sh` uses its output path unquoted, so
+the space in "KTP Git Projects" splits every redirect and the script writes
+nothing and **exits 0**. It regenerates correctly on a space-free path, so
+"the generator never runs" is not the explanation, whatever else claims it is.
 
-## CI is not a safety net here
-Push CI has been fully broken since extension mode landed (Dec 2025): the
-Linux job moves a filename CMake stopped producing, the Windows project never
-compiles `extension_mode.cpp` (permanent link failure), and even a fixed Linux
-job would die on leftover upstream signing steps referencing secrets this fork
-doesn't have. Treat every push as **unverified by CI** — a green run doesn't
-exist to lean on. Build locally and smoke-test manually.
+## CI is a compile gate, not a deploy gate
+`.github/workflows/ktp-ci.yml` is the fork's CI: header-drift against
+KTP-ReHLDS, a Linux 32-bit build, and a Windows MSVC build. It gates
+**compilation only** — fleet binaries are built locally and verified by md5, and
+the CI artifact is never the deploy artifact. Green CI does not mean smoke-tested;
+that is still the Tier-2 runner's job.
+
+`.github/workflows/build.yml` ("C/C++ CI") is upstream's release pipeline and is
+scoped to `master` so it does not run here. It wants upstream's GPG and PFX
+secrets. Do not revive it; put fork gates in `ktp-ci.yml`.
+
+⚠️ **The MSVC project and `reapi/CMakeLists.txt` keep independent source lists,
+and nothing but the Windows CI job keeps them in step.** A file added to one and
+not the other builds clean on Linux and link-fails on Windows —
+`extension_mode.cpp` did exactly that for ~8 months, unnoticed because no Windows
+build ever ran. Add every new source to **both**.
 
 ## Include contract
 `reapi.inc` is DUAL-COPY between this repo's `extra/` and KTPAMXX's

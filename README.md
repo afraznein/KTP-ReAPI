@@ -196,6 +196,12 @@ The build script auto-stages to `KTP DoD Server/serverfiles/dod/addons/ktpamx/mo
 
 Output: `msvc/Release/reapi_amxx.dll`
 
+The MSVC project and `reapi/CMakeLists.txt` keep **separate source lists**. A file
+added to one and not the other builds on Linux and fails to link on Windows —
+`extension_mode.cpp` did exactly that from 2025-12-03 until 2026-08-15. The
+`build-windows` job in `.github/workflows/ktp-ci.yml` is what catches it now; add
+new sources to both lists.
+
 ---
 
 ## Installation
@@ -246,6 +252,9 @@ pausable 0
 | `reapi/src/hook_list.h/cpp` | Add 4 KTP hook entries |
 | `reapi/src/hook_callback.h/cpp` | Add KTP hook callback handlers |
 | `reapi/CMakeLists.txt` | Add `extension_mode.cpp` to sources |
+| `reapi/msvc/reapi.vcxproj` | Add `extension_mode.cpp`/`.h`; `engine_api.cpp` compiles to nothing |
+| `reapi/msvc/reapi.def` | Drop the `GiveFnptrsToDll` export — not defined in extension mode |
+| `reapi/src/engine_api.cpp` | Guard the whole file: it needs Metamod's `ENGINE_INTERFACE_VERSION` |
 
 ### Build Changes
 - Upgraded to Visual Studio 2022 (v143 toolset) from v140_xp
@@ -261,10 +270,13 @@ pausable 0
 - **Platform**: Visual Studio 2022 (v143) / GCC with 32-bit multilib
 - **Compatible with**: KTPAMXX 2.6.10+, KTP-ReHLDS 3.22+
 
-The `appversion.h` banner still reads `5.29.0.360-dev+m` and is *not* a deploy
-check — CMake's `appversion` target is written `DEPENDS COMMAND …`, so the generator
-never runs and the banner has been frozen since 2025-11-28. Verify by the md5 of
-`reapi_ktp_i386.so`.
+The `appversion.h` banner is *not* a deploy check. It is generated from the commit
+count, so it always reads a `-dev` number ahead of the release tag, and
+`reapi/version/appversion.sh` leaves it stale outright when the checkout path
+contains a space — it word-splits the path into its own output redirects and still
+exits 0. (Both build systems do run their generator; the CMake target regenerates
+the header fine on a space-free path, and MSVC's `version` project always has.)
+Verify by the md5 of `reapi_ktp_i386.so`.
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

@@ -8,6 +8,59 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ### [Unreleased]
 
+Build and CI only — **no version bump and no new binary.** `reapi_ktp_i386.so` rebuilds
+to `ea5f1801a98650f1c7e20a4636b39685`, byte-identical to the `.366`+`.367` artifact, which
+is the point: none of this reaches the shipped module. ReAPI builds are deterministic, so
+that md5 is a real check rather than a claim.
+
+**Fixed**
+- **The Windows build has been broken since 2025-12-03 and nothing noticed.** The MSVC
+  project never listed `extension_mode.cpp`, so every symbol that file defines —
+  `g_pFunctionTable`, `g_bExtensionMode`, `g_nExtRequestId`, the `ExtensionMode_*` entry
+  points, both `ExtHook_*` callbacks — is an unresolved external on Windows. `CMakeLists.txt`
+  picked the file up when extension mode landed; the `.vcxproj` was never updated. The last
+  successful Windows build predates that commit.
+  Two more Windows-only breakages sat behind it, invisible until the project compiles the
+  right set of files: `engine_api.cpp` is in the `.vcxproj` but not in `CMakeLists.txt`, and
+  it needs `ENGINE_INTERFACE_VERSION`, which only reaches a TU through `meta_api.h` — a
+  header `precompiled.h` stops including under `REAPI_NO_METAMOD`. And `reapi.def` still
+  exports `GiveFnptrsToDll`, which `h_export.cpp` no longer defines, which is an unresolved
+  external at link. `engine_api.cpp` is now guarded whole, the way `meta_api.cpp`,
+  `dllapi.cpp` and `h_export.cpp` already are, rather than dropped from the project — the
+  point of that pattern is that upstream still merges.
+  ⚠️ **Unverified on Windows.** There is no Visual Studio on the machine this was written
+  on. The fix is derived from the CI compiler output and the symbol sets, not observed. The
+  new CI job is what will prove it.
+- **Upstream's `build.yml` went red on every pull request.** Its `pull_request` trigger had
+  no branch filter, so a workflow that exists to sign and publish upstream's releases — and
+  therefore needs GPG and PFX secrets and a `master` branch the fork does not have — ran
+  here and failed, reliably enough that nobody read it. Scoped to `master`. Its Linux job
+  also still moved and glibc-tested `reapi_amxx_i386.so`, a name the KTP CMake rename
+  retired; corrected in place so the file does not carry a path that cannot exist.
+
+**Added**
+- **A Windows compile gate**, `build-windows` in `ktp-ci.yml`. The MSVC project and
+  `CMakeLists.txt` carry independent source lists and there is no mechanism keeping them in
+  step, so only a Windows compile catches a file added to one and not the other. Compile
+  gate only; nothing here ships a `.dll`.
+
+**Corrected**
+- **`.gitignore`'s `*.sh`, `*.bat` and `*.ps1` matched the build tooling itself** —
+  `build.sh`, `build_linux.sh`, `appversion.sh`, `glibc_test.sh`, `appversion.bat`,
+  `PostBuild.bat`. All six are in the repo, but only because they were force-added; nothing
+  structural held them there and the next one added would have disappeared from `git add -A`
+  without a word. Replaced with the four personal wrappers by name. The ignored set is
+  unchanged — only how it is expressed.
+- **"CMake's `appversion` target never runs" is wrong**, and it had been repeated into a
+  code comment in `meta_api.cpp`. `add_custom_target(appversion DEPENDS COMMAND …)` does run
+  the script: CI regenerates `appversion.h` on every clean build. What actually freezes the
+  header is `appversion.sh` using `$APPVERSION_FILE` unquoted in its output redirects, so a
+  checkout path containing a space is split apart — and the script still exits 0. Left as
+  found rather than patched, since it is upstream code and the version of record is the
+  `.so` md5 either way. The real reason `APP_VERSION` cannot back `Plugin_info.version`
+  is simpler and unchanged: it is generated from the commit count and reads `-dev`, never
+  the release tag.
+
 ### [5.29.0.367-ktp] - 2026-08-09
 
 **Fixed**
