@@ -1,5 +1,11 @@
 #include "precompiled.h"
 
+// Metamod-only: ENGINE_INTERFACE_VERSION lives in meta_api.h, which extension mode
+// never includes. Guarded like the other Metamod TUs rather than deleted, so upstream
+// still merges cleanly.
+
+#ifndef REAPI_NO_METAMOD
+
 enginefuncs_t meta_engfuncs_post =
 {
 	NULL,		// pfnPrecacheModel()
@@ -190,3 +196,5 @@ C_DLLEXPORT int GetEngineFunctions_Post(enginefuncs_t *pengfuncsFromEngine, int 
 	memcpy(pengfuncsFromEngine, &meta_engfuncs_post, sizeof(enginefuncs_t));
 	return TRUE;
 }
+
+#endif // !REAPI_NO_METAMOD
