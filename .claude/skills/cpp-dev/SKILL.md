@@ -86,9 +86,12 @@ KTP-ReHLDS, a Linux 32-bit build, and a Windows MSVC build. It gates
 the CI artifact is never the deploy artifact. Green CI does not mean smoke-tested;
 that is still the Tier-2 runner's job.
 
-`.github/workflows/build.yml` ("C/C++ CI") is upstream's release pipeline and is
-scoped to `master` so it does not run here. It wants upstream's GPG and PFX
-secrets. Do not revive it; put fork gates in `ktp-ci.yml`.
+`.github/workflows/build.yml` ("C/C++ CI") is upstream's release pipeline and wants
+upstream's GPG and PFX secrets. Its branch filters are **not** what hold it — `release`
+and `workflow_dispatch` reach it whatever the branch, and a manual dispatch is how it
+last went red here. Every job carries `if: github.repository != 'afraznein/KTP-ReAPI'`,
+which is what actually keeps it inert; phrased as "not this fork" so it survives an
+upstream rename. Do not revive it; put fork gates in `ktp-ci.yml`.
 
 ⚠️ **The MSVC project and `reapi/CMakeLists.txt` keep independent source lists,
 and nothing but the Windows CI job keeps them in step.** A file added to one and

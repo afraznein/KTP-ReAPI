@@ -52,13 +52,12 @@ enum ginfo_t {
 // Get game info in extension mode
 const char* ExtensionMode_GetGameInfo(ginfo_t type);
 
-// GET_USER_MSG_ID - lookup user message ID by name (stub in extension mode)
-// In extension mode, this needs to be provided via AMXX's get_user_msgid native
-// or obtained from the engine's message registration
+// Failure sentinels, unreachable in every build of this fork -- the one expansion site is
+// Metamod-guarded and a Metamod build takes these macros from mutil.h. Plugins want AMXX's
+// get_user_msgid(); a real module-side lookup means capturing PF_RegUserMsg_I, not these.
 int ExtensionMode_GetUserMsgID(void* plid, const char* msgname, int* size);
 #define GET_USER_MSG_ID(plid, msgname, size) ExtensionMode_GetUserMsgID(plid, msgname, size)
 
-// GET_USER_MSG_NAME - lookup user message name by ID (stub in extension mode)
 const char* ExtensionMode_GetUserMsgName(void* plid, int msgid, int* size);
 #define GET_USER_MSG_NAME(plid, msgid, size) ExtensionMode_GetUserMsgName(plid, msgid, size)
 
