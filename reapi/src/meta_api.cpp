@@ -5,8 +5,8 @@
 // KTP: Plugin info is used for logging even in extension mode
 // The struct is defined in extension_mode.h
 // Bump `version` with every release: it is what AMXX reports for this module.
-// APP_VERSION cannot stand in for it -- CMake's appversion target is written
-// `DEPENDS COMMAND`, so the generator never runs and appversion.h is frozen.
+// APP_VERSION cannot stand in -- appversion.h is generated from the commit count
+// and reads `-dev`, never the release tag.
 plugin_info_stub_t Plugin_info = {
 	"ReAPI",          // name
 	"Asmodai & s1lent",  // author

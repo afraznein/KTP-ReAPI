@@ -1,5 +1,5 @@
 LIBRARY reapi_amxx
-EXPORTS
-	GiveFnptrsToDll			@1
+; GiveFnptrsToDll is Metamod-only and is not compiled in extension mode -- exporting
+; it from here is an unresolved external at link time.
 SECTIONS
 	.data READ WRITE

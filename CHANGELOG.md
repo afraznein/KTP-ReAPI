@@ -8,6 +8,78 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ### [Unreleased]
 
+Build and CI only — **no version bump and no new binary.** `reapi_ktp_i386.so` rebuilds
+to `ea5f1801a98650f1c7e20a4636b39685`, byte-identical to the `.366`+`.367` artifact, which
+is the point: none of this reaches the shipped module. ReAPI builds are deterministic, so
+that md5 is a real check rather than a claim.
+
+**Fixed**
+- **The Windows build has been broken since 2025-12-03 and nothing noticed.** The MSVC
+  project never listed `extension_mode.cpp`. `CMakeLists.txt` picked the file up when
+  extension mode landed; the `.vcxproj` was never updated. The last successful Windows build
+  predates that commit.
+  ⚠️ **The missing-symbol failure is inferred, not observed** — the only Windows build ever
+  run on this fork died at *compile*, on `engine_api.cpp`, and never reached the linker. What
+  would actually go unresolved, checked call site by call site: `g_bExtensionMode`
+  (`amxxmodule.cpp`), `g_pengfuncsTable` (`natives_common.cpp`, `natives_misc.cpp`, and every
+  `EMESSAGE_BEGIN`/`EWRITE_*` inline in `reapi_utils.h`), `g_nExtRequestId` via
+  `MAKE_REQUESTID` (`queryfile_handler.cpp`), `ExtensionMode_Init` (`main.cpp`),
+  `ExtensionMode_Shutdown` (`amxxmodule.cpp`), `ExtensionMode_GetGameInfo`
+  (`mod_regamedll_api.cpp`), `ExtensionMode_GetUserMsgID` (`main.cpp`) and
+  `ExtensionMode_MDLL_Spawn`/`_Touch` (`reapi_utils.cpp`). **Not** `g_pFunctionTable` — every
+  use of it is Metamod-guarded and `reapi_utils.h` only declares it `extern`, so its
+  definition here is belt-and-braces. **Not** the two `ExtHook_*` callbacks either: nothing
+  outside `extension_mode.cpp` names them.
+  Two more Windows-only breakages sat behind it, invisible until the project compiles the
+  right set of files: `engine_api.cpp` is in the `.vcxproj` but not in `CMakeLists.txt`, and
+  it needs `ENGINE_INTERFACE_VERSION`, which only reaches a TU through `meta_api.h` — a
+  header `precompiled.h` stops including under `REAPI_NO_METAMOD`. And `reapi.def` still
+  exports `GiveFnptrsToDll`, which `h_export.cpp` no longer defines, which is an unresolved
+  external at link. `engine_api.cpp` is now guarded whole, the way `meta_api.cpp`,
+  `dllapi.cpp` and `h_export.cpp` already are, rather than dropped from the project — the
+  point of that pattern is that upstream still merges.
+  ⚠️ **Unverified on Windows.** There is no Visual Studio on the machine this was written
+  on. The fix is derived from the CI compiler output and the symbol sets, not observed. The
+  new CI job is what will prove it.
+- **Upstream's `build.yml` could still be reached on this fork, and failed when it was.** It
+  exists to sign and publish upstream's releases, so it needs GPG and PFX secrets and a
+  `master` branch the fork does not have. `push` was already scoped to `master`;
+  `pull_request` was not, so the first PR opened here would have gone red on both jobs, and
+  `release`/`workflow_dispatch` reach it regardless of branch — a manual dispatch is exactly
+  how the one red run on this fork happened. Filtered `pull_request` to `master` and gated
+  all three jobs on `github.repository != 'afraznein/KTP-ReAPI'`, which is what actually
+  makes it inert whatever the trigger. Its Linux job also still moved and glibc-tested
+  `reapi_amxx_i386.so`, a name the KTP CMake rename retired; corrected in place rather than
+  left as a path that cannot exist.
+
+**Added**
+- **A Windows compile gate**, `build-windows` in `ktp-ci.yml`. The MSVC project and
+  `CMakeLists.txt` carry independent source lists and there is no mechanism keeping them in
+  step, so only a Windows compile catches a file added to one and not the other. Compile
+  gate only; nothing here ships a `.dll`.
+
+**Corrected**
+- **`.gitignore`'s `*.sh`, `*.bat` and `*.ps1` matched the build tooling itself** —
+  `build.sh`, `build_linux.sh`, `appversion.sh`, `glibc_test.sh`, `appversion.bat`,
+  `PostBuild.bat`. All are in the repo, but only because they were force-added; nothing
+  structural held them there and the next one added would have disappeared from `git add -A`
+  without a word. Replaced with the personal wrappers named by path. Nothing in the tree
+  today changes state — the new patterns are a strict subset, so nothing is newly hidden and
+  nothing currently present is newly exposed — but the point of the change is that it
+  narrows what gets caught *in future*. ⚠️ **That cuts both ways in a public repo:** an
+  ad-hoc `deploy.sh` carrying fleet credentials used to be swallowed by `*.sh` and is now one
+  `git add -A` from being committed. Nothing here needs such a script; if one ever does, give
+  it its own ignore line before writing it.
+- **"CMake's `appversion` target never runs" is wrong**, and it had been repeated into a
+  code comment in `meta_api.cpp`. `add_custom_target(appversion DEPENDS COMMAND …)` does run
+  the script: CI regenerates `appversion.h` on every clean build. What actually freezes the
+  header is `appversion.sh` using `$APPVERSION_FILE` unquoted in its output redirects, so a
+  checkout path containing a space is split apart — and the script still exits 0. Left as
+  found rather than patched, since it is upstream code and the version of record is the
+  `.so` md5 either way. The real reason `APP_VERSION` cannot back `Plugin_info.version`
+  is simpler and unchanged: it is generated from the commit count and reads `-dev`, never
+  the release tag.
+
 ### [5.29.0.367-ktp] - 2026-08-09
 
 **Fixed**
