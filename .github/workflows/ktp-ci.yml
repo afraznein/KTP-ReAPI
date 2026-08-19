@@ -9,6 +9,9 @@
 #    KTP-ReHLDS. Vtable drift produces silent wrong-function calls with NO
 #    compile error. KTP-ReHLDS runs the same check, but only on ITS pushes —
 #    so a change made on this side was ungated until this job existed.
+#    Compares against a same-named branch on KTP-ReHLDS when one exists, else its
+#    default branch. The byte-diff is unconditional either way, and the run
+#    on main after merge still compares main against main.
 #  - build-linux: compile gate only. Fleet binaries are built locally and
 #    verified by md5; the CI artifact is never the deploy artifact.
 #  - build-windows: compile gate only — nothing here ships a .dll. It exists
@@ -26,6 +29,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      rehlds_ref:
+        description: 'KTP-ReHLDS ref to diff rehlds_api.h against. Blank = the same-named branch if it exists, else its default branch.'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   header-drift:
@@ -35,18 +44,45 @@ jobs:
       - name: Checkout KTP-ReAPI
         uses: actions/checkout@v6
 
+      # Checking out the counterpart with no ref reads its DEFAULT branch, so a
+      # coordinated header change on feature branches in both repos failed on both
+      # sides until one merged. Prefer a same-named branch; else the default.
+      - name: Resolve KTP-ReHLDS ref
+        id: counterpart
+        env:
+          COUNTERPART: https://github.com/afraznein/KTP-ReHLDS.git
+          OVERRIDE: ${{ inputs.rehlds_ref }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ -n "$OVERRIDE" ]; then
+            REF="$OVERRIDE"
+            echo "dispatch override: $REF"
+          elif [ -n "$BRANCH" ] && git ls-remote --exit-code --heads "$COUNTERPART" "refs/heads/$BRANCH" >/dev/null 2>&1; then
+            REF="$BRANCH"
+            echo "matched same-named branch on KTP-ReHLDS: $REF"
+          else
+            REF=$(git ls-remote --symref "$COUNTERPART" HEAD | awk '/^ref:/ { sub("refs/heads/", "", $2); print $2; exit }')
+            echo "no matching branch on KTP-ReHLDS; using its default branch: $REF"
+          fi
+          # An empty ref makes checkout take the default branch, so a probe that
+          # died would read as a passing comparison instead of a failure.
+          test -n "$REF" || { echo "::error::could not resolve a KTP-ReHLDS ref to compare against"; exit 1; }
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+
       - name: Checkout KTP-ReHLDS
         uses: actions/checkout@v6
         with:
           repository: afraznein/KTP-ReHLDS
+          ref: ${{ steps.counterpart.outputs.ref }}
           path: ktprehlds
 
       - name: Diff the dual copies
         run: |
           if diff -u reapi/include/cssdk/engine/rehlds_api.h ktprehlds/rehlds/public/rehlds/rehlds_api.h; then
-            echo "rehlds_api.h copies are byte-identical"
+            echo "rehlds_api.h copies are byte-identical (KTP-ReHLDS @ ${{ steps.counterpart.outputs.ref }})"
           else
-            echo "::error::rehlds_api.h has DRIFTED between KTP-ReAPI and KTP-ReHLDS. Vtable drift = silent wrong-function calls at runtime. Hook slots are APPEND-ONLY; sync both copies in the same change window."
+            echo "::error::rehlds_api.h has DRIFTED between KTP-ReAPI and KTP-ReHLDS. Vtable drift = silent wrong-function calls at runtime. Hook slots are APPEND-ONLY; sync both copies in the same change window. Compared against KTP-ReHLDS @ ${{ steps.counterpart.outputs.ref }}."
             exit 1
           fi
 
