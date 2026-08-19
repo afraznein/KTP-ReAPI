@@ -6,6 +6,25 @@
 
 set -e  # Exit on error
 
+# A failed build must be VISIBLE, not merely non-zero. Callers pipe this script
+# (`| tail`, `| tee`), and the shell then reports the PIPE's status -- so a failed
+# build reads as exit 0 unless the log itself says so. Gate on the banners below,
+# never on the exit code.
+_ktp_build_exit() {
+    local rc=$?
+    [ -n "${BUILD_STAMP:-}" ] && rm -f "$BUILD_STAMP"
+    if [ "$rc" -ne 0 ]; then
+        echo ""
+        echo "========================================"
+        echo "[KTP-BUILD] FAILED: KTPReAPI build_linux.sh exited $rc"
+        echo "========================================"
+        echo "Nothing has been staged."
+    fi
+    exit "$rc"
+}
+trap _ktp_build_exit EXIT
+
+
 echo "========================================"
 echo "KTPReAPI Linux Build Script"
 echo "========================================"
@@ -56,7 +75,6 @@ chmod +x reapi/version/appversion.sh
 # catches a stale .so left behind in build/.
 
 BUILD_STAMP="$(mktemp)"   # reference mtime: anything older than this is not ours
-trap 'rm -f "$BUILD_STAMP"' EXIT
 
 echo "Building ReAPI..."
 set +e
@@ -124,3 +142,7 @@ else
     echo "Staging folder not found: $DEPLOY_DIR"
     echo "(build succeeded; nothing staged)"
 fi
+
+# Success sentinel, last line on the only path that reaches here. A caller checks
+# for this rather than for `$?`, which a pipe launders.
+echo "[KTP-BUILD] OK: KTPReAPI build_linux.sh"
