@@ -10,7 +10,7 @@
 plugin_info_stub_t Plugin_info = {
 	"ReAPI",          // name
 	"Asmodai & s1lent",  // author
-	"5.29.0.367-ktp", // version
+	"5.29.0.368-ktp", // version
 	0,                // reload
 	"ReAPI"           // logtag
 };

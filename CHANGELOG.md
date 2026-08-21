@@ -6,9 +6,40 @@ This changelog includes both KTP fork changes and upstream ReAPI history.
 
 ## KTP Fork Releases
 
-### [Unreleased]
+### [Unreleased] — `5.29.0.368-ktp`
 
-Build and CI only — **no version bump and no new binary.** `reapi_ktp_i386.so` rebuilds
+**Changed**
+- **`REHLDS_API_VERSION_MINOR` 15 → 16, mirroring KTP-ReHLDS.** The fork's
+  `IRehldsHookchains` carries 69 pure virtuals against upstream's 56 —
+  `SV_UpdatePausedHUD` **inserted at slot 42**, 12 more appended — while minor sat at
+  upstream's 15 in both copies. The handshake asserted a compatibility the layout does
+  not have.
+
+  Nothing here is symbol resolution: consumers call `vtable[N]` with `N` baked in at
+  compile time, and the sole dynamic lookup (`VREHLDS_HLDS_API_VERSION001`) succeeds
+  either way. A mismatched pairing is a **silent wrong-virtual-call**, and the one guard
+  — `minorVersion < REHLDS_API_VERSION_MINOR`, `mod_rehlds_api.cpp:68` — is
+  one-directional, firing only when the *engine* is behind.
+
+  So this bump buys exactly one thing: a reapi built at 16 now **refuses to load** on an
+  engine still at 15, instead of corrupting silently. The reverse (engine 16, reapi 15)
+  still loads silently, which is why **the sanctioned activation order is modules-first.**
+
+  ⚠️ **This changes the binary** — unlike the build/CI work below, the constant is
+  compiled into the guard. `.368` must be rebuilt and cannot reuse `.367`'s artifact.
+
+  ⚠️ **The queued `.367` (`ea5f1801a98650f1c7e20a4636b39685`) is NOT invalidated.** It
+  embeds `minor < 15` and the unchanged 69-entry layout, so it passes against the live
+  engine (reports 15) *and* against an engine at 16, and no virtual moved. It may still
+  ship on its own schedule. What it does not get is the new guard — it will keep loading
+  against any engine ≥ 15 regardless of later vtable edits. That protection begins only
+  with `.368`.
+
+  ⚠️ **`.368` may not ship alone.** Engine + KTPAMXX core + reapi + DODX stage together
+  and swap at one nightly restart; a reapi-only wave onto the 15 engine is now a
+  refuse-to-load, which in extension mode means the module simply does not come up.
+
+Below this line: build and CI only — **no version bump and no new binary.** `reapi_ktp_i386.so` rebuilds
 to `ea5f1801a98650f1c7e20a4636b39685`, byte-identical to the `.366`+`.367` artifact, which
 is the point: none of this reaches the shipped module. ReAPI builds are deterministic, so
 that md5 is a real check rather than a claim.
