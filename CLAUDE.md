@@ -58,6 +58,14 @@ Credentials.
 
 **Remote Path:** `~/dod-{port}/serverfiles/dod/addons/ktpamx/modules/reapi_ktp_i386.so`
 
+## Identifying a deployed build
+
+The version the module reports (what `amxx modules` prints) is a hardcoded literal, not something
+the build derives, so different builds can report the same string and a stale literal survives any
+number of cuts. **The md5 of `reapi_ktp_i386.so` is the only identity.** If you need the reported
+string itself, read it off the binary with `grep -a` and a positive control rather than quoting it
+from a doc.
+
 ## Related Projects
 - `N:\Nein_\KTP Git Projects\KTPAMXX` - AMX Mod X fork (provides module API)
 - `N:\Nein_\KTP Git Projects\KTPReHLDS` - ReHLDS fork (engine layer)
