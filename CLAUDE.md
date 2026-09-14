@@ -2,6 +2,9 @@
 
 **REQUIRED: Before modifying any C++ or include files in this repo, invoke the `cpp-dev` skill** (`.claude/skills/cpp-dev/SKILL.md`). It carries the Metamod-path-only teardown trap, the vtable ABI contract, and the build/verify workflow; do not edit source without it loaded.
 
+**A design that ships as a document is NOT done** — every proposal in a docs-only PR becomes a
+tracked board item in the same act (operator ruling 2026-09-14). See `DESIGN_DOCS_ARE_NOT_DONE.md`.
+
 ## Build Command
 To build this project, use:
 ```bash
