@@ -149,9 +149,32 @@ set(PUBLIC_SRCS
 
 add_library(reapi SHARED ${appversion.sh})
 
-if (NOT TARGET appversion)
-	add_custom_target(appversion DEPENDS COMMAND "${PROJECT_SOURCE_DIR}/version/appversion.sh" "${PROJECT_SOURCE_DIR}/.." "reapi")
+set(APPVERSION_H "${PROJECT_SOURCE_DIR}/version/appversion.h")
+set(APPVERSION_INC "${PROJECT_SOURCE_DIR}/version/reapi_version.inc")
+
+# HEAD's reflog moves on every commit and checkout; without git the header is only made when missing.
+execute_process(
+	COMMAND git -C "${PROJECT_SOURCE_DIR}/.." rev-parse --absolute-git-dir
+	OUTPUT_VARIABLE APPVERSION_GIT_DIR
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+	ERROR_QUIET
+)
+set(APPVERSION_GIT_DEPS "")
+if (APPVERSION_GIT_DIR AND EXISTS "${APPVERSION_GIT_DIR}/logs/HEAD")
+	set(APPVERSION_GIT_DEPS "${APPVERSION_GIT_DIR}/logs/HEAD")
 endif()
+
+# The script rewrites the header only when the version changed, so touch keeps the outputs current between commits.
+add_custom_command(
+	OUTPUT "${APPVERSION_H}" "${APPVERSION_INC}"
+	COMMAND "${PROJECT_SOURCE_DIR}/version/appversion.sh" "${PROJECT_SOURCE_DIR}/.." "reapi"
+	COMMAND ${CMAKE_COMMAND} -E touch "${APPVERSION_H}" "${APPVERSION_INC}"
+	DEPENDS "${PROJECT_SOURCE_DIR}/version/appversion.sh" "${PROJECT_SOURCE_DIR}/version/version.h" ${APPVERSION_GIT_DEPS}
+	COMMENT "Generating appversion.h"
+	VERBATIM
+)
+
+add_custom_target(appversion DEPENDS "${APPVERSION_H}" "${APPVERSION_INC}")
 
 add_dependencies(reapi appversion)
 
