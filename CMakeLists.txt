@@ -6,8 +6,4 @@ if (WIN32)
 endif()
 
 
-add_custom_target(appversion DEPENDS
-	COMMAND "${PROJECT_SOURCE_DIR}/reapi/version/appversion.sh" "${PROJECT_SOURCE_DIR}" "reapi"
-)
-
 add_subdirectory(reapi)
