@@ -2,11 +2,11 @@
 
 init()
 {
-	SOURCE_DIR=$1
-	GIT_DIR=$SOURCE_DIR
-	VERSION_FILE=$SOURCE_DIR/reapi/version/version.h
-	APPVERSION_FILE=$SOURCE_DIR/reapi/version/appversion.h
-	APPVERSION_FILE_INC=$2
+	SOURCE_DIR="$1"
+	GIT_DIR="$SOURCE_DIR"
+	VERSION_FILE="$SOURCE_DIR/reapi/version/version.h"
+	APPVERSION_FILE="$SOURCE_DIR/reapi/version/appversion.h"
+	APPVERSION_FILE_INC="$2"
 	GENERATE_INC=0
 
 	PREFIX_INC_LOWER=${APPVERSION_FILE_INC,,}
@@ -23,11 +23,11 @@ init()
 	# Read old version from $APPVERSION_FILE_INC, if present
 	#
 	if [ $? -ne 0 -o "$APPVERSION_FILE_INC" != "" ] && [ $? -ne 0 -o "$PREFIX_INC_UPPER" != "" ]; then
-		APPVERSION_FILE_INC=$SOURCE_DIR/reapi/version/${APPVERSION_FILE_INC}_version.inc
+		APPVERSION_FILE_INC="$SOURCE_DIR/reapi/version/${APPVERSION_FILE_INC}_version.inc"
 
 		if [ $? -ne 0 -o "$APPVERSION_FILE_INC" != "" ] && [ $? -ne 0 -o "$PREFIX_INC_UPPER" != "" ]; then
-			if test -f $APPVERSION_FILE_INC ; then
-				OLD_VERSION_INC=$(cat $APPVERSION_FILE_INC | grep -wi "$DEFINE_PREFIXINC" | sed -e "s/$DEFINE_PREFIXINC.*[^0-9]\([0-9][0-9]*\).*/\1/i" -e "s/\r//g")
+			if test -f "$APPVERSION_FILE_INC" ; then
+				OLD_VERSION_INC=$(cat "$APPVERSION_FILE_INC" | grep -wi "$DEFINE_PREFIXINC" | sed -e "s/$DEFINE_PREFIXINC.*[^0-9]\([0-9][0-9]*\).*/\1/i" -e "s/\r//g")
 			fi
 
 			GENERATE_INC=1
@@ -35,8 +35,8 @@ init()
 	fi
 
 	# Read old version
-	if [ -e $APPVERSION_FILE ]; then
-		OLD_VERSION=$(cat $APPVERSION_FILE | grep -wi '#define APP_VERSION' | sed -e 's/#define APP_VERSION[ \t\r\n\v\f]\+\(.*\)/\1/i' -e 's/\r//g')
+	if [ -e "$APPVERSION_FILE" ]; then
+		OLD_VERSION=$(cat "$APPVERSION_FILE" | grep -wi '#define APP_VERSION' | sed -e 's/#define APP_VERSION[ \t\r\n\v\f]\+\(.*\)/\1/i' -e 's/\r//g')
 		if [ $? -ne 0 ]; then
 			OLD_VERSION=""
 		else
@@ -155,48 +155,50 @@ update_appversion()
 	# Write appversion.h
 	echo Updating appversion.h, new version is '"'$NEW_VERSION'"', the old one was $OLD_VERSION
 
-	echo -e "#ifndef __APPVERSION_H__\r">$APPVERSION_FILE
-	echo -e "#define __APPVERSION_H__\r">>$APPVERSION_FILE
-	echo -e "\r">>$APPVERSION_FILE
-	echo -e "//\r">>$APPVERSION_FILE
-	echo -e "// This file is generated automatically.\r">>$APPVERSION_FILE
-	echo -e "// Don't edit it.\r">>$APPVERSION_FILE
-	echo -e "//\r">>$APPVERSION_FILE
-	echo -e "\r">>$APPVERSION_FILE
-	echo -e "// Version defines\r">>$APPVERSION_FILE
-	echo -e '#define APP_VERSION "'$NEW_VERSION'"\r'>>$APPVERSION_FILE
+	echo -e "#ifndef __APPVERSION_H__\r">"$APPVERSION_FILE"
+	echo -e "#define __APPVERSION_H__\r">>"$APPVERSION_FILE"
+	echo -e "\r">>"$APPVERSION_FILE"
+	echo -e "//\r">>"$APPVERSION_FILE"
+	echo -e "// This file is generated automatically.\r">>"$APPVERSION_FILE"
+	echo -e "// Don't edit it.\r">>"$APPVERSION_FILE"
+	echo -e "//\r">>"$APPVERSION_FILE"
+	echo -e "\r">>"$APPVERSION_FILE"
+	echo -e "// Version defines\r">>"$APPVERSION_FILE"
+	echo -e '#define APP_VERSION "'$NEW_VERSION'"\r'>>"$APPVERSION_FILE"
 
-	echo -e "#define APP_VERSION_C $MAJOR,$MINOR,$MAINTENANCE,$COMMIT_COUNT\r">>$APPVERSION_FILE
-	echo -e '#define APP_VERSION_STRD "'$MAJOR.$MINOR.$MAINTENANCE.$COMMIT_COUNT'"\r'>>$APPVERSION_FILE
-	echo -e "#define APP_VERSION_FLAGS 0x0L\r">>$APPVERSION_FILE
-	echo -e "\r">>$APPVERSION_FILE
-	echo -e '#define APP_COMMIT_DATE "'$month $day $year'"\r'>>$APPVERSION_FILE
-	echo -e '#define APP_COMMIT_TIME "'$hours'"\r'>>$APPVERSION_FILE
-	echo -e "\r">>$APPVERSION_FILE
+	echo -e "#define APP_VERSION_C $MAJOR,$MINOR,$MAINTENANCE,$COMMIT_COUNT\r">>"$APPVERSION_FILE"
+	echo -e '#define APP_VERSION_STRD "'$MAJOR.$MINOR.$MAINTENANCE.$COMMIT_COUNT'"\r'>>"$APPVERSION_FILE"
+	echo -e "#define APP_VERSION_FLAGS 0x0L\r">>"$APPVERSION_FILE"
+	echo -e "\r">>"$APPVERSION_FILE"
+	echo -e '#define APP_COMMIT_DATE "'$month $day $year'"\r'>>"$APPVERSION_FILE"
+	echo -e '#define APP_COMMIT_TIME "'$hours'"\r'>>"$APPVERSION_FILE"
+	echo -e "\r">>"$APPVERSION_FILE"
 
-	echo -e '#define APP_COMMIT_SHA "'$COMMIT_SHA'"\r'>>$APPVERSION_FILE
-	echo -e '#define APP_COMMIT_URL "'$COMMIT_URL'"\r'>>$APPVERSION_FILE
-	echo -e "\r">>$APPVERSION_FILE
-	echo -e "#endif //__APPVERSION_H__\r">>$APPVERSION_FILE
+	echo -e '#define APP_COMMIT_SHA "'$COMMIT_SHA'"\r'>>"$APPVERSION_FILE"
+	echo -e '#define APP_COMMIT_URL "'$COMMIT_URL'"\r'>>"$APPVERSION_FILE"
+	echo -e "\r">>"$APPVERSION_FILE"
+	echo -e "#endif //__APPVERSION_H__\r">>"$APPVERSION_FILE"
 }
 
 update_appversion_inc()
 {
-	echo Updating $APPVERSION_FILE_INC, new version is '"'$NEW_VERSION_INC'"', the old one was $OLD_VERSION_INC
+	echo Updating "$APPVERSION_FILE_INC", new version is '"'$NEW_VERSION_INC'"', the old one was $OLD_VERSION_INC
 
-	echo -e "#if defined _${PREFIX_INC_LOWER}_version_included\r">$APPVERSION_FILE_INC
-	echo -e "	#endinput\r">>$APPVERSION_FILE_INC
-	echo -e "#endif\r">>$APPVERSION_FILE_INC
-	echo -e "#define _${PREFIX_INC_LOWER}_version_included\r">>$APPVERSION_FILE_INC
-	echo -e "\r">>$APPVERSION_FILE_INC
-	echo -e "// $PREFIX_INC_LOWER version\r">>$APPVERSION_FILE_INC
-	echo -e "#define ${PREFIX_INC_UPPER}_VERSION $NEW_VERSION_INC\r">>$APPVERSION_FILE_INC
-	echo -e "#define ${PREFIX_INC_UPPER}_VERSION_MAJOR $MAJOR\r">>$APPVERSION_FILE_INC
-	echo -e "#define ${PREFIX_INC_UPPER}_VERSION_MINOR $MINOR\r">>$APPVERSION_FILE_INC
+	echo -e "#if defined _${PREFIX_INC_LOWER}_version_included\r">"$APPVERSION_FILE_INC"
+	echo -e "	#endinput\r">>"$APPVERSION_FILE_INC"
+	echo -e "#endif\r">>"$APPVERSION_FILE_INC"
+	echo -e "#define _${PREFIX_INC_LOWER}_version_included\r">>"$APPVERSION_FILE_INC"
+	echo -e "\r">>"$APPVERSION_FILE_INC"
+	echo -e "// $PREFIX_INC_LOWER version\r">>"$APPVERSION_FILE_INC"
+	echo -e "#define ${PREFIX_INC_UPPER}_VERSION $NEW_VERSION_INC\r">>"$APPVERSION_FILE_INC"
+	echo -e "#define ${PREFIX_INC_UPPER}_VERSION_MAJOR $MAJOR\r">>"$APPVERSION_FILE_INC"
+	echo -e "#define ${PREFIX_INC_UPPER}_VERSION_MINOR $MINOR\r">>"$APPVERSION_FILE_INC"
 }
 
 # Initialise
-init $*
+# "$@" not $*: CMake passes the source dir as ONE argv element, and $* re-splits it
+# on IFS, so a checkout path containing a space loses everything after the first word.
+init "$@"
 
 # Exit normally
 exit 0
